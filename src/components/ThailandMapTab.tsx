@@ -65,6 +65,8 @@ const REGION_ZOOM: Record<RegionId, number> = {
 // Province names appear once zoomed past this scale, and only where they fit on screen
 const LABEL_MIN_SCALE = 1.6;
 const LABEL_MIN_WIDTH_PX = 34;
+// On-screen label size grows with zoom: ~11px at 1.6x up to 20px when zoomed far in
+const labelPx = (k: number) => Math.min(20, 11 + (k - LABEL_MIN_SCALE) * 2.6);
 
 // Bounding box of an absolute M/L/Z path
 const pathBounds = (d: string): Bounds => {
@@ -443,7 +445,9 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
               {k >= LABEL_MIN_SCALE &&
                 PROVINCE_SHAPES.map((shape) => {
                   const b = boundsByName.get(shape.name)!;
-                  if ((b.maxX - b.minX) * k < LABEL_MIN_WIDTH_PX || shape.name === selected) return null;
+                  // Bigger text needs a wider province on screen, so small neighbours don't overlap
+                  const px = labelPx(k);
+                  if ((b.maxX - b.minX) * k < Math.max(LABEL_MIN_WIDTH_PX, px * 3.4) || shape.name === selected) return null;
                   return (
                     <text
                       key={`label-${shape.name}`}
@@ -451,11 +455,11 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                       y={shape.cy}
                       textAnchor="middle"
                       dominantBaseline="middle"
-                      fontSize={10 / k}
+                      fontSize={px / k}
                       fontWeight={700}
                       fill="#1e293b"
                       stroke="#ffffff"
-                      strokeWidth={2.5 / k}
+                      strokeWidth={(px * 0.28) / k}
                       paintOrder="stroke"
                       pointerEvents="none"
                       className="animate-fadeIn"
