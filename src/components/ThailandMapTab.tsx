@@ -19,7 +19,7 @@ import {
   Accessibility,
 } from 'lucide-react';
 import { useMapZoom, Bounds } from '@/lib/useMapZoom';
-import { placeImages } from '@/lib/placeImages';
+import { placeImages, cityPhoto } from '@/lib/placeImages';
 import { accessibilityOf, WHEELCHAIR_META } from '@/data/placeAccessibility';
 import { PROVINCE_SHAPES, THAILAND_VIEWBOX } from '@/data/thailandMap';
 import { PROVINCE_TRAVEL, ProvinceTravel, RegionId, AttractionCategory } from '@/data/thailandTravel';
@@ -50,7 +50,7 @@ interface BasketItem {
 // The AI planner accepts at most this many must-visit places
 const MAX_BASKET = 15;
 
-const DIM_FILL = '#e9e7e0';
+const DIM_FILL = '#E2E8F0';
 
 const [, , MAP_W, MAP_H] = THAILAND_VIEWBOX.split(' ').map(Number);
 
@@ -209,7 +209,14 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
           .filter((src) => !brokenPhotos.current.has(src))
           .map((src) => ({ province: hovered, place: a.name, src }))
       ) ?? [];
-    setHoverPhoto(options.length ? options[Math.floor(Math.random() * options.length)] : null);
+    const city = cityPhoto(hovered);
+    setHoverPhoto(
+      options.length
+        ? options[Math.floor(Math.random() * options.length)]
+        : city && !brokenPhotos.current.has(city)
+        ? { province: hovered, place: `ภาพจังหวัด${hovered}`, src: city }
+        : null
+    );
   }, [hovered, travelByName]);
 
   const inBasket = (name: string, province: string) => basket.some((b) => b.name === name && b.province === province);
@@ -318,7 +325,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                 onClick={() => setCategoryFilter(isOn ? null : cat)}
                 className={`h-8 px-2.5 rounded-md text-xs font-medium border inline-flex items-center gap-1.5 transition-colors duration-150 ${
                   isOn
-                    ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:text-ink-900'
+                    ? 'bg-emerald-600 border-emerald-600 text-white'
                     : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900'
                 }`}
               >
@@ -345,7 +352,14 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-6 items-start">
         {/* MAP */}
-        <div className="rounded-xl bg-sky-50 border border-slate-200 p-4 sm:p-6">
+        <div className="thai-map-panel relative overflow-hidden rounded-xl border border-amber-200 p-4 sm:p-6">
+          {/* Thai touches: a gold ประจำยาม border band and sky lanterns (โคมลอย) drifting up behind the map */}
+          <div aria-hidden className="thai-band absolute inset-x-0 top-0 h-2.5" />
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            {[12, 28, 47, 63, 78, 90].map((left, i) => (
+              <span key={left} className="khom-loi" style={{ left: `${left}%`, animationDelay: `${i * -3.1}s`, animationDuration: `${15 + (i % 3) * 4}s` } as React.CSSProperties} />
+            ))}
+          </div>
           <div className="flex flex-wrap gap-1.5 mb-3">
             {REGION_ORDER.map((region) => {
               const meta = REGION_META[region];
@@ -407,7 +421,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                 <path
                   d={selectedShape.d}
                   fill="none"
-                  stroke="#126c61"
+                  stroke="#0057FF"
                   strokeWidth={2.2}
                   strokeLinejoin="round"
                   vectorEffect="non-scaling-stroke"
@@ -486,7 +500,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                   // Markers keep a constant on-screen size at any zoom
                   <g key={name} pointerEvents="none" transform={`translate(${s.cx} ${s.cy}) scale(${1 / k})`}>
                     {/* Offset so the selected-province pin does not cover it */}
-                    <circle cx={9} cy={-9} r={7} fill="#1a7d71" stroke="#fff" strokeWidth={1.5} />
+                    <circle cx={9} cy={-9} r={7} fill="#0057FF" stroke="#fff" strokeWidth={1.5} />
                     <text x={9} y={-6} textAnchor="middle" fontSize={8} fontWeight={700} fill="#fff">
                       {count}
                     </text>
@@ -542,16 +556,16 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
               {selectedShape && (
                 <g pointerEvents="none" transform={`translate(${selectedShape.cx} ${selectedShape.cy}) scale(${1 / k})`}>
                   {/* Target ripple on the ground */}
-                  <ellipse cx={0} cy={0} rx={6} ry={2.5} fill="none" stroke="#126c61" strokeWidth={1.5}>
+                  <ellipse cx={0} cy={0} rx={6} ry={2.5} fill="none" stroke="#0057FF" strokeWidth={1.5}>
                     <animate attributeName="rx" values="4;16;4" dur="1.8s" repeatCount="indefinite" />
                     <animate attributeName="ry" values="1.6;6;1.6" dur="1.8s" repeatCount="indefinite" />
                     <animate attributeName="opacity" values="0.8;0;0.8" dur="1.8s" repeatCount="indefinite" />
                   </ellipse>
-                  <ellipse cx={0} cy={0} rx={4} ry={1.6} fill="#0b3a35" opacity={0.35} />
+                  <ellipse cx={0} cy={0} rx={4} ry={1.6} fill="#1E3A8A" opacity={0.35} />
                   {/* Re-keyed per province so the flag drops in again on each new pick */}
                   <g key={selectedShape.name} className="map-flag-drop">
                     <line x1={0} y1={0} x2={0} y2={-26} stroke="#343e4f" strokeWidth={1.8} strokeLinecap="round" />
-                    <path d="M1 -26 Q8 -29 15 -25 T26 -22 L26 -12 Q19 -15 13 -12 T1 -14 Z" fill="#1a7d71" stroke="#fff" strokeWidth={1}>
+                    <path d="M1 -26 Q8 -29 15 -25 T26 -22 L26 -12 Q19 -15 13 -12 T1 -14 Z" fill="#0057FF" stroke="#fff" strokeWidth={1}>
                       <animate
                         attributeName="d"
                         dur="1.2s"
@@ -567,7 +581,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                     textAnchor="middle"
                     fontSize={12}
                     fontWeight={700}
-                    fill="#0b3a35"
+                    fill="#1E3A8A"
                     stroke="#fff"
                     strokeWidth={3}
                     paintOrder="stroke"
@@ -710,7 +724,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                 </div>
                 <button
                   onClick={() => setDetailProvince(selectedTravel.name)}
-                  className="mt-4 h-9 px-3.5 rounded-md bg-ink-900 text-white text-xs font-semibold flex items-center gap-1.5 hover:bg-ink-800 transition-colors"
+                  className="mt-4 h-9 px-3.5 rounded-md bg-emerald-600 text-white text-xs font-semibold flex items-center gap-1.5 hover:bg-emerald-700 transition-colors"
                 >
                   <MapPin className="w-3.5 h-3.5" /> ดูรูป อากาศ งบประมาณ & ความหนาแน่น
                 </button>

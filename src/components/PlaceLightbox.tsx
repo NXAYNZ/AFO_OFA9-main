@@ -244,7 +244,7 @@ export const PlaceLightbox: React.FC<PlaceLightboxProps> = ({
                     setError(null);
                   }}
                   className={`h-8 rounded text-xs font-medium flex items-center justify-center gap-1.5 transition-colors ${
-                    tab === k ? 'bg-slate-900 text-white dark:bg-white dark:text-ink-900' : 'text-slate-500 hover:text-slate-900'
+                    tab === k ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   {k === 'review' ? <Star className="w-3.5 h-3.5" /> : <MessageCircle className="w-3.5 h-3.5" />}

@@ -5,7 +5,7 @@ import { Star, Flame, MessageCircle, ArrowLeft, Crown } from 'lucide-react';
 import { PROVINCE_TRAVEL, RegionId, AttractionCategory } from '@/data/thailandTravel';
 import { REGION_META, CATEGORY_META } from '@/lib/travelMeta';
 import { estimateCrowd, CROWD_LEVELS } from '@/lib/tripEstimates';
-import { placeImages } from '@/lib/placeImages';
+import { placeImagesOrCity } from '@/lib/placeImages';
 import { fetchReviewSummaries, ReviewSummary } from '@/lib/placeReviews';
 
 export interface TopPlace {
@@ -39,7 +39,7 @@ export const useRegionTop = (region: RegionId | null) => {
               place: a.name,
               category: a.category,
               peak: Math.max(...estimateCrowd(p, a).hourly),
-              photo: placeImages(p.name, a.name)[0],
+              photo: placeImagesOrCity(p.name, a.name)[0],
             }))
           )
         : [],

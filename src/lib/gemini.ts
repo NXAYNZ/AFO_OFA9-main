@@ -65,7 +65,7 @@ function generateThaiFallbackPlans(params: GenerateTripPlanParams): GeneratedTri
         totalEstimatedCost: Math.min(calculatedCost, costPerPerson),
         estimatedSavings: Math.round(Math.min(calculatedCost, costPerPerson) * 0.18),
         savingsTips: [
-          ...(mustVisit.length > 0 ? [`📍 จุดที่คุณเลือกจากแผนที่: ${mustVisit.join(', ')}`] : []),
+          ...(mustVisit.length > 0 ? [`จุดที่คุณเลือกจากแผนที่: ${mustVisit.join(', ')}`] : []),
           ...prefNotes,
           ...basePlan.savingsTips,
           `ช่วงเดินทางตรวจพบว่าเป็นช่วง ${weather.season} Season: แนะนำจองตั๋วและที่พักล่วงหน้าผ่าน OTA เพื่อรับส่วนลด 15-25%`,

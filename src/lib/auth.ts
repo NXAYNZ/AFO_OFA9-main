@@ -13,14 +13,14 @@ export interface ProfileFormData {
 }
 
 export const TRAVEL_STYLE_OPTIONS = [
-  '🏖️ สายทะเล',
-  '⛰️ สายภูเขา',
-  '☕ สายคาเฟ่',
-  '🍜 สายกิน',
-  '🧗 สายลุย',
-  '🎉 สายปาร์ตี้',
-  '🛕 สายวัฒนธรรม',
-  '📸 สายถ่ายรูป',
+  'สายทะเล',
+  'สายภูเขา',
+  'สายคาเฟ่',
+  'สายกิน',
+  'สายลุย',
+  'สายปาร์ตี้',
+  'สายวัฒนธรรม',
+  'สายถ่ายรูป',
 ];
 
 // Columns readable by clients (email is deliberately excluded, see supabase/auth_profiles.sql)
@@ -85,7 +85,7 @@ export const buildNewProfile = (id: string, email: string, form: ProfileFormData
   tripsCompleted: 0,
   tripsCancelled: 0,
   isVerified: true,
-  warningTags: ['✅ ยืนยันตัวตนด้วย Google'],
+  warningTags: ['ยืนยันตัวตนด้วย Google'],
 });
 
 // Prefill values for the profile form from the Google account

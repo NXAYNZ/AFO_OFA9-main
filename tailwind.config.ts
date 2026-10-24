@@ -3,71 +3,21 @@ import type { Config } from "tailwindcss";
 // TripSure palette: every stock Tailwind hue used in the app folds into five roles so the
 // whole product reads as one system. Stone/ink neutrals, Andaman lagoon (action, success),
 // gulf blue (information, weather), saffron (money, tiers), terracotta (penalties, errors).
-const ink = {
-  50: "#f5f4f0",
-  100: "#ecebe5",
-  200: "#dddad1",
-  300: "#c4c0b5",
-  400: "#8f9196",
-  500: "#5f6876",
-  600: "#475163",
-  700: "#343e4f",
-  800: "#212c3d",
-  900: "#13233a",
-  950: "#0a1422",
-};
-const lagoon = {
-  50: "#ebf4f1",
-  100: "#d1e7e2",
-  200: "#a5d1c8",
-  300: "#6fb4a8",
-  400: "#3b978a",
-  500: "#1a7d71",
-  600: "#126c61",
-  700: "#0e5951",
-  800: "#0c4741",
-  900: "#0b3a35",
-  950: "#062521",
-};
-const gulf = {
-  50: "#eef2f7",
-  100: "#dce4ef",
-  200: "#bccadd",
-  300: "#8fa6c4",
-  400: "#6683a8",
-  500: "#456590",
-  600: "#34507a",
-  700: "#2a4165",
-  800: "#213352",
-  900: "#1a2942",
-  950: "#111b2d",
-};
-const saffron = {
-  50: "#fbf4e8",
-  100: "#f6e5c6",
-  200: "#edcb8e",
-  300: "#e2ae57",
-  400: "#d69533",
-  500: "#c27f1e",
-  600: "#a66817",
-  700: "#855215",
-  800: "#6a4216",
-  900: "#573716",
-  950: "#321d08",
-};
-const terracotta = {
-  50: "#fbefec",
-  100: "#f6dcd5",
-  200: "#edb9ac",
-  300: "#e08f7c",
-  400: "#d06a53",
-  500: "#bc4d36",
-  600: "#a13d29",
-  700: "#833223",
-  800: "#6a2a1f",
-  900: "#57251c",
-  950: "#2f110c",
-};
+// Palettes resolve through CSS variables (globals.css) so a theme class can repaint the whole app
+const palette = (name: string) =>
+  Object.fromEntries([50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map((k) => [k, `rgb(var(--c-${name}-${k}) / <alpha-value>)`]));
+const ink = palette("ink");
+const lagoon = palette("lagoon");
+const gulf = palette("gulf");
+const saffron = palette("saffron");
+const terracotta = palette("terracotta");
+
+// Landing page (blue & white travel-tech). Separate names so neither the remap above
+// nor the dark-theme sheet ever touches them.
+const tsb = { 50: "#EFF6FF", 100: "#DBEAFE", 200: "#BFDBFE", 300: "#93C5FD", 400: "#4C8DFF", 500: "#1A6BFF", 600: "#0057FF", 700: "#1D4ED8", 800: "#1E3A8A" };
+const tsn = { 0: "#FFFFFF", 50: "#F8FAFC", 100: "#F1F5F9", 200: "#E2E8F0", 300: "#CBD5E1", 400: "#94A3B8", 500: "#64748B", 600: "#475569", 700: "#334155", 800: "#1E293B", 900: "#0F172A", 950: "#0B192C" };
+const tsg = { 50: "#ECFDF5", 100: "#D1FAE5", 500: "#10B981", 600: "#059669", 700: "#047857" };
+const tsa = { 50: "#FFFBEB", 100: "#FEF3C7", 500: "#F59E0B", 600: "#D97706", 700: "#B45309" };
 
 const config: Config = {
   darkMode: 'class',
@@ -81,6 +31,10 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        tsb,
+        tsn,
+        tsg,
+        tsa,
         ink,
         lagoon,
         gulf,
@@ -111,18 +65,20 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-ui)", "system-ui", "sans-serif"],
         display: ["var(--font-display)", "var(--font-ui)", "serif"],
+        prompt: ["var(--font-prompt)", "system-ui", "sans-serif"],
+        script: ["var(--font-script)", "cursive"],
         // Figures in data use the UI face with tabular numerals (see globals.css), not a code face
         mono: ["var(--font-ui)", "system-ui", "sans-serif"],
         sarabun: ["var(--font-ui)", "system-ui", "sans-serif"],
       },
       borderRadius: {
-        sm: "3px",
-        DEFAULT: "4px",
-        md: "6px",
-        lg: "8px",
-        xl: "10px",
-        "2xl": "12px",
-        "3xl": "14px",
+        sm: "var(--r-sm, 3px)",
+        DEFAULT: "var(--r-base, 4px)",
+        md: "var(--r-md, 6px)",
+        lg: "var(--r-lg, 8px)",
+        xl: "var(--r-xl, 10px)",
+        "2xl": "var(--r-2xl, 12px)",
+        "3xl": "var(--r-3xl, 14px)",
       },
       boxShadow: {
         sm: "0 1px 2px rgb(19 35 58 / 0.06)",

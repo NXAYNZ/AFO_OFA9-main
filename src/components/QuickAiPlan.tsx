@@ -181,7 +181,7 @@ export const QuickAiPlan: React.FC<QuickAiPlanProps> = ({ suggestedProvince, bas
                   }}
                   aria-pressed={days === n}
                   className={`h-8 rounded text-xs font-medium transition-colors ${
-                    days === n ? 'bg-slate-900 text-white dark:bg-white dark:text-ink-900' : 'text-slate-600 hover:text-slate-900'
+                    days === n ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   {n === 1 ? 'ไปกลับ' : `${n} วัน`}
@@ -200,7 +200,7 @@ export const QuickAiPlan: React.FC<QuickAiPlanProps> = ({ suggestedProvince, bas
                   onClick={() => setStyle(s.id)}
                   aria-pressed={style === s.id}
                   className={`h-8 rounded text-xs font-medium transition-colors ${
-                    style === s.id ? 'bg-slate-900 text-white dark:bg-white dark:text-ink-900' : 'text-slate-600 hover:text-slate-900'
+                    style === s.id ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   {s.label}

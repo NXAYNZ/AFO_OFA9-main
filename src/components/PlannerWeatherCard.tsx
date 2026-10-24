@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Umbrella, Sparkles } from 'lucide-react';
 import { WeatherForecast } from '@/lib/types';
+import { stripEmoji } from '@/lib/text';
 import { bangkokNow } from '@/lib/tripEstimates';
 import { WeatherScene, sceneFor, SCENE_BACKGROUND, SCENE_LABEL, SCENE_ICON } from '@/components/WeatherScene';
 
@@ -98,7 +99,7 @@ export const PlannerWeatherCard: React.FC<PlannerWeatherCardProps> = ({ province
               <Sparkles className="w-3.5 h-3.5" />
               คำแนะนำจากสภาพอากาศ
             </div>
-            {weather.advisory}
+            {stripEmoji(weather.advisory)}
           </div>
         </div>
 

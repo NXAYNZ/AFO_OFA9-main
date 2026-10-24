@@ -222,7 +222,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
         {currentTier !== 'PLATINUM' && (
           <button
             onClick={onOpenUpgradeModal}
-            className="self-start sm:self-center h-10 px-4 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors dark:bg-white dark:text-ink-900 dark:hover:bg-ink-100"
+            className="self-start sm:self-center h-10 px-4 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors "
           >
             อัปเกรดสมาชิก
           </button>

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { X, Sun, Moon, Monitor, Trash2, Check } from 'lucide-react';
-import { DisplaySettings, ThemePreference } from '@/lib/theme';
+import { X, Trash2, Check } from 'lucide-react';
+import { DisplaySettings } from '@/lib/theme';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -11,11 +11,6 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
-const THEME_OPTIONS: { id: ThemePreference; label: string; icon: React.ReactNode; preview: string }[] = [
-  { id: 'light', label: 'สว่าง', icon: <Sun className="w-4 h-4" />, preview: 'linear-gradient(90deg, #13233a 22%, #f5f4f0 22%)' },
-  { id: 'dark', label: 'มืด', icon: <Moon className="w-4 h-4" />, preview: 'linear-gradient(90deg, #13233a 22%, #0a1422 22%)' },
-  { id: 'system', label: 'ตามระบบ', icon: <Monitor className="w-4 h-4" />, preview: 'linear-gradient(90deg, #13233a 22%, #f5f4f0 22%, #f5f4f0 61%, #0a1422 61%)' },
-];
 
 // Browser-only data the demo mode keeps (no Supabase)
 const LOCAL_DATA_KEYS = ['tripsure_place_reviews', 'tripsure_tier', 'tripsure_quota'];
@@ -62,37 +57,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, settings, 
         </div>
 
         <div className="p-6 space-y-7">
-          {/* Theme */}
-          <section>
-            <h3 className="text-sm font-semibold text-slate-900">ธีม</h3>
-            <p className="text-xs text-slate-500">เลือกโหมดสว่าง โหมดมืด หรือให้ตามการตั้งค่าของเครื่อง</p>
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              {THEME_OPTIONS.map((opt) => {
-                const isOn = settings.theme === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    onClick={() => onChange({ ...settings, theme: opt.id })}
-                    className={`relative rounded-lg border p-2 text-left transition-colors ${
-                      isOn ? 'border-emerald-600 ring-1 ring-emerald-600' : 'border-slate-200 hover:border-slate-400'
-                    }`}
-                    aria-pressed={isOn}
-                  >
-                    <div className="h-14 rounded border border-slate-300" style={{ background: opt.preview }} />
-                    <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-slate-900">
-                      {opt.icon} {opt.label}
-                    </div>
-                    {isOn && (
-                      <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center">
-                        <Check className="w-3 h-3" />
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
           {/* Motion */}
           <section className="flex items-start justify-between gap-4">
             <div>

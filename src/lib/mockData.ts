@@ -21,7 +21,7 @@ export const INITIAL_USER: UserProfile = {
   tripsCompleted: 4,
   tripsCancelled: 0,
   isVerified: true,
-  warningTags: ['✅ บัญชียืนยันตัวตนแล้ว', '🌟 สมาชิกระดับ VIP'],
+  warningTags: ['บัญชียืนยันตัวตนแล้ว', 'สมาชิกระดับ VIP'],
 };
 
 export const MOCK_USERS: UserProfile[] = [
@@ -38,7 +38,7 @@ export const MOCK_USERS: UserProfile[] = [
     tripsCompleted: 24,
     tripsCancelled: 0,
     isVerified: true,
-    warningTags: ['👑 Verified Super Host', '✅ ไม่เคยเททริป 24 ทริปติด', '🛡️ ประกันเงินคืน 100%'],
+    warningTags: ['Verified Super Host', 'ไม่เคยเททริป 24 ทริปติด', 'ประกันเงินคืน 100%'],
   },
   {
     id: 'd0000001-0000-0000-0000-000000000002',
@@ -53,7 +53,7 @@ export const MOCK_USERS: UserProfile[] = [
     tripsCompleted: 11,
     tripsCancelled: 0,
     isVerified: true,
-    warningTags: ['✅ ตรงต่อเวลามาก', '🌟 สมาชิกดีเด่น 2025'],
+    warningTags: ['ตรงต่อเวลามาก', 'สมาชิกดีเด่น 2025'],
   },
   {
     id: 'd0000001-0000-0000-0000-000000000003',
@@ -68,7 +68,7 @@ export const MOCK_USERS: UserProfile[] = [
     tripsCompleted: 5,
     tripsCancelled: 1,
     isVerified: true,
-    warningTags: ['⚠️ เคยยกเลิกกระทันหัน 1 ครั้ง (โดนหัก 10%)', '⚡ ผ่านการยืนยันเบอร์โทร'],
+    warningTags: ['เคยยกเลิกกระทันหัน 1 ครั้ง (โดนหัก 10%)', 'ผ่านการยืนยันเบอร์โทร'],
   },
   {
     id: 'd0000001-0000-0000-0000-000000000004',
@@ -83,7 +83,7 @@ export const MOCK_USERS: UserProfile[] = [
     tripsCompleted: 8,
     tripsCancelled: 0,
     isVerified: true,
-    warningTags: ['✅ ไม่เคยเททริป 8 ทริปติด', '📸 ตากล้องประจำกลุ่ม'],
+    warningTags: ['ไม่เคยเททริป 8 ทริปติด', 'ตากล้องประจำกลุ่ม'],
   },
 ];
 
@@ -103,10 +103,10 @@ export const HERO_COMMUNITY_TRIP: CommunityTrip = {
   cancellationPenaltyRate: 0.10, // 10%
   tripPoolBalance: 9000, // 6 members * 1,500 THB deposit held
   highlights: [
-    '🚤 เหมาเรือสปีดโบ๊ทส่วนตัวข้ามฟากไป-กลับ (ไม่ต้องรอรอบเรือช้า)',
-    '🏡 พูลวิลล่าติดหาดทรายแก้ว คาราโอเกะ สระว่ายน้ำส่วนตัว',
-    '🦐 ปาร์ตี้ปิ้งย่างซีฟู้ด กุ้ง หอย ปู ปลาหมึก ไม่อั้นในคืนที่ 2',
-    '🛡️ สัญญา Smart Escrow ล็อกมัดจำ 1,500 บาท ป้องกันเททริป 100%',
+    'เหมาเรือสปีดโบ๊ทส่วนตัวข้ามฟากไป-กลับ (ไม่ต้องรอรอบเรือช้า)',
+    'พูลวิลล่าติดหาดทรายแก้ว คาราโอเกะ สระว่ายน้ำส่วนตัว',
+    'ปาร์ตี้ปิ้งย่างซีฟู้ด กุ้ง หอย ปู ปลาหมึก ไม่อั้นในคืนที่ 2',
+    'สัญญา Smart Escrow ล็อกมัดจำ 1,500 บาท ป้องกันเททริป 100%',
   ],
   imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
   participants: [
@@ -196,9 +196,9 @@ export const ADDITIONAL_COMMUNITY_TRIPS: CommunityTrip[] = [
     cancellationPenaltyRate: 0.10,
     tripPoolBalance: 3000,
     highlights: [
-      '⛺ กางเต็นท์จุดชมวิวดอยเสมอดาว ทะเลหมอก 360 องศา',
-      '☕ ดริปกาแฟสดเด่นชัย-บ่อเกลือ ชมวิวนาข้าวสะปัน',
-      '🚗 เหมารถตู้ VIP นำเที่ยวพร้อมคนขับท้องถิ่น',
+      'กางเต็นท์จุดชมวิวดอยเสมอดาว ทะเลหมอก 360 องศา',
+      'ดริปกาแฟสดเด่นชัย-บ่อเกลือ ชมวิวนาข้าวสะปัน',
+      'เหมารถตู้ VIP นำเที่ยวพร้อมคนขับท้องถิ่น',
     ],
     // Sea of mist at Doi Samer Dao, Si Nan National Park (Wikimedia Commons, Kris4to, CC BY-SA 4.0)
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Morning_sea_of_mist%2C_Doi_Samer_Dao%2C_Si_Nan%2C_Nan%2C_Thailand.jpg/1280px-Morning_sea_of_mist%2C_Doi_Samer_Dao%2C_Si_Nan%2C_Nan%2C_Thailand.jpg',
@@ -221,9 +221,9 @@ export const ADDITIONAL_COMMUNITY_TRIPS: CommunityTrip[] = [
     cancellationPenaltyRate: 0.10,
     tripPoolBalance: 8000,
     highlights: [
-      '🤿 เรือหางยาวพรีเมียมส่วนตัวพร้อมช่างภาพใต้น้ำ',
-      '🏝️ ถ่ายรูปหัวเรือเกาะพีพีดอน อ่าวมาหยา ถ้ำไวกิ้ง',
-      '🥗 บุฟเฟต์อาหารค่ำซีฟู้ดอ่าวนาง',
+      'เรือหางยาวพรีเมียมส่วนตัวพร้อมช่างภาพใต้น้ำ',
+      'ถ่ายรูปหัวเรือเกาะพีพีดอน อ่าวมาหยา ถ้ำไวกิ้ง',
+      'บุฟเฟต์อาหารค่ำซีฟู้ดอ่าวนาง',
     ],
     imageUrl: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?auto=format&fit=crop&w=1200&q=80',
     participants: [],
@@ -243,7 +243,7 @@ export const MOCK_REVIEWS: UserReview[] = [
     punctualityRating: 5,
     honestyRating: 5,
     comment: 'พี่สมชายจัดการทริปดีมาก บัญชีเปิดเผยโปร่งใส มีระบบ Escrow ทำให้สบายใจ ไม่ต้องกลัวโดนเบี้ยวเงินเลย ทริปหน้าไปด้วยแน่นอนค่ะ!',
-    badges: ['👑 Super Host', '💎 ซื่อสัตย์โปร่งใส', '⏰ ตรงต่อเวลา'],
+    badges: ['Super Host', 'ซื่อสัตย์โปร่งใส', 'ตรงต่อเวลา'],
     createdAt: '2 วันที่แล้ว',
   },
   {
@@ -258,7 +258,7 @@ export const MOCK_REVIEWS: UserReview[] = [
     punctualityRating: 5,
     honestyRating: 5,
     comment: 'น้องกิ๊ฟน่ารักมาก ช่วยดูแลเพื่อนๆ ในกลุ่ม ไม่สายเลยแม้แต่นาทีเดียว เป็นเพื่อนร่วมทริปในฝันครับ',
-    badges: ['🌟 สมาชิกดีเด่น', '🤝 ช่วยเหลือเพื่อนร่วมทริป'],
+    badges: ['สมาชิกดีเด่น', 'ช่วยเหลือเพื่อนร่วมทริป'],
     createdAt: '3 วันที่แล้ว',
   },
   {
@@ -273,7 +273,7 @@ export const MOCK_REVIEWS: UserReview[] = [
     punctualityRating: 3,
     honestyRating: 4,
     comment: 'ทริปก่อนหน้ายกเลิกกระทันหันก่อนเดินทาง 3 วัน แต่ระบบหัก 10% เข้ากองกลางให้เพื่อนๆ สมาชิกเลยไม่เดือดร้อนเรื่องค่าเรือมาก ทริปนี้เลยให้โอกาสแก้ตัวครับ',
-    badges: ['⚠️ เคยถูกหักค่าปรับเททริป 10%'],
+    badges: ['เคยถูกหักค่าปรับเททริป 10%'],
     createdAt: '1 สัปดาห์ที่แล้ว',
   },
 ];
@@ -656,7 +656,7 @@ export const SAMPLE_OTA_COMPARISONS: OtaComparison[] = [
     isCheapest: false,
     affiliateCommissionRate: 0.04,
     bookingUrl: 'https://www.agoda.com/partners/partnersearch.aspx?cid=1928472&hid=sai-kaew-beach-resort',
-    badges: ['⭐ แนะนำสำหรับครอบครัว & เพื่อน', '⚡ จองก่อนจ่ายทีหลังได้'],
+    badges: ['แนะนำสำหรับครอบครัว & เพื่อน', 'จองก่อนจ่ายทีหลังได้'],
   },
   {
     id: 'ota_02',
@@ -671,7 +671,7 @@ export const SAMPLE_OTA_COMPARISONS: OtaComparison[] = [
     isCheapest: true,
     affiliateCommissionRate: 0.04,
     bookingUrl: 'https://th.trip.com/hotels/detail/?hotelId=sai-kaew-resort&allianceid=tripsure',
-    badges: ['🔥 ราคาดีที่สุดวันนี้ (Best Price)', '🎁 ฟรีอาหารเช้า 2 ท่าน'],
+    badges: ['ราคาดีที่สุดวันนี้ (Best Price)', 'ฟรีอาหารเช้า 2 ท่าน'],
   },
   {
     id: 'ota_03',
@@ -686,7 +686,7 @@ export const SAMPLE_OTA_COMPARISONS: OtaComparison[] = [
     isCheapest: false,
     affiliateCommissionRate: 0.02,
     bookingUrl: 'https://www.samedresorts.com/saikaew',
-    badges: ['🚤 แถมฟรีเรือสปีดโบ๊ทรับส่งท่าเรือ', '🍹 เวลคัมดริ้งก์พรีเมียม'],
+    badges: ['แถมฟรีเรือสปีดโบ๊ทรับส่งท่าเรือ', 'เวลคัมดริ้งก์พรีเมียม'],
   },
   {
     id: 'ota_04',
@@ -701,7 +701,7 @@ export const SAMPLE_OTA_COMPARISONS: OtaComparison[] = [
     isCheapest: true,
     affiliateCommissionRate: 0.05,
     bookingUrl: 'https://th.trip.com/transport/rayong-minivan',
-    badges: ['🎟️ E-Ticket ยืนยันทันที', '❄️ รถตู้เบาะนวดปรับเอน'],
+    badges: ['E-Ticket ยืนยันทันที', 'รถตู้เบาะนวดปรับเอน'],
   },
   {
     id: 'ota_05',
@@ -716,6 +716,6 @@ export const SAMPLE_OTA_COMPARISONS: OtaComparison[] = [
     isCheapest: true,
     affiliateCommissionRate: 0.04,
     bookingUrl: 'https://www.agoda.com/activities/samet-speedboat-transfer',
-    badges: ['🚤 ไม่ต้องรอคิวท่าเรือ', '🛡️ มีประกันอุบัติเหตุทางน้ำ'],
+    badges: ['ไม่ต้องรอคิวท่าเรือ', 'มีประกันอุบัติเหตุทางน้ำ'],
   },
 ];

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Anuphan, Trirong } from 'next/font/google';
+import { Anuphan, Trirong, Prompt, Caveat } from 'next/font/google';
 import './globals.css';
 import './dark-theme.css';
 import { THEME_INIT_SCRIPT } from '@/lib/theme';
@@ -15,6 +15,20 @@ const displayFont = Trirong({
   subsets: ['thai', 'latin'],
   weight: ['500', '600', '700'],
   variable: '--font-display',
+  display: 'swap',
+});
+
+// Landing page: Prompt for Thai UI copy, Caveat for the handwritten accents
+const promptFont = Prompt({
+  subsets: ['thai', 'latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-prompt',
+  display: 'swap',
+});
+const scriptFont = Caveat({
+  subsets: ['latin'],
+  weight: ['600', '700'],
+  variable: '--font-script',
   display: 'swap',
 });
 
@@ -45,11 +59,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="th" suppressHydrationWarning className={`${uiFont.variable} ${displayFont.variable}`}>
+    <html lang="th" suppressHydrationWarning className={`theme-blue ${uiFont.variable} ${displayFont.variable} ${promptFont.variable} ${scriptFont.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body className="min-h-screen bg-slate-50 text-slate-900">
+      <body className="min-h-screen bg-slate-50 text-slate-900 font-prompt">
         {children}
       </body>
     </html>

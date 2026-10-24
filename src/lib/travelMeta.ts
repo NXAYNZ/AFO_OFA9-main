@@ -16,13 +16,13 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { RegionId, AttractionCategory } from '@/data/thailandTravel';
 
-// Region tints read like a survey atlas: sage hills, Isan sand, rice-paper plains, jade coast, sea mist
+// Bright region colours: mountain green north, golden Isan, temple orange central, fruit-and-sea east, Andaman blue south
 export const REGION_META: Record<RegionId, { label: string; fill: string; hover: string; desc: string }> = {
-  north: { label: 'ภาคเหนือ', fill: '#d6dbbf', hover: '#bfc79f', desc: 'ดอยสูง ทะเลหมอก อากาศเย็น วัฒนธรรมล้านนา' },
-  northeast: { label: 'ภาคอีสาน', fill: '#ebd9ae', hover: '#dec285', desc: 'ปราสาทหินขอม ทะเลบัวแดง ริมโขง' },
-  central: { label: 'ภาคกลาง & ตะวันตก', fill: '#e6e1c8', hover: '#d4cca6', desc: 'กรุงเทพฯ กรุงเก่า ตลาดน้ำ ป่าตะวันตก' },
-  east: { label: 'ภาคตะวันออก', fill: '#c8ded0', hover: '#a7c9b3', desc: 'ทะเลใกล้กรุง เกาะช้าง น้ำตก ผลไม้' },
-  south: { label: 'ภาคใต้', fill: '#c3d7e2', hover: '#9fbfd0', desc: 'อันดามัน & อ่าวไทย เกาะสวยระดับโลก' },
+  north: { label: 'ภาคเหนือ', fill: '#7DD89C', hover: '#45C373', desc: 'ดอยสูง ทะเลหมอก อากาศเย็น วัฒนธรรมล้านนา' },
+  northeast: { label: 'ภาคอีสาน', fill: '#FFD25E', hover: '#FFBE2E', desc: 'ปราสาทหินขอม ทะเลบัวแดง ริมโขง' },
+  central: { label: 'ภาคกลาง & ตะวันตก', fill: '#FFA47E', hover: '#FF8455', desc: 'กรุงเทพฯ กรุงเก่า ตลาดน้ำ ป่าตะวันตก' },
+  east: { label: 'ภาคตะวันออก', fill: '#6FD6E6', hover: '#36C1D8', desc: 'ทะเลใกล้กรุง เกาะช้าง น้ำตก ผลไม้' },
+  south: { label: 'ภาคใต้', fill: '#8FB8FF', hover: '#5E94FF', desc: 'อันดามัน & อ่าวไทย เกาะสวยระดับโลก' },
 };
 
 export const CATEGORY_META: Record<AttractionCategory, { label: string; icon: LucideIcon }> = {

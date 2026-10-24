@@ -1,0 +1,20 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "prompt",
+        "createdAt": "2026-10-24T14:30:41.590Z",
+        "reason": "user brief: landing page must use Thai font Prompt or Noto Sans Thai"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "caveat",
+        "createdAt": "2026-10-24T14:30:47.538Z",
+        "reason": "user brief: handwritten script accents (Your Next Trip Starts Here / Smarter Trip, Better Business)"
+      }
+    ]
+  }
+}

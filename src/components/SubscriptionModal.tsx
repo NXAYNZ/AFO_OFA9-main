@@ -76,7 +76,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ isOpen, on
         particleCount: 70,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ['#1a7d71', '#c27f1e', '#13233a', '#6fb4a8', '#e2ae57'],
+        colors: ['#0057FF', '#F59E0B', '#0F172A', '#93C5FD', '#FBBF24'],
         disableForReducedMotion: true,
       });
     }

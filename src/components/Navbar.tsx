@@ -242,7 +242,7 @@ interface UserMenuProps {
   onSignOut: () => void;
 }
 
-const UserMenu: React.FC<UserMenuProps> = ({ member, onSignIn, onEditProfile, onSignOut }) => {
+export const UserMenu: React.FC<UserMenuProps> = ({ member, onSignIn, onEditProfile, onSignOut }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [avatarBroken, setAvatarBroken] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);

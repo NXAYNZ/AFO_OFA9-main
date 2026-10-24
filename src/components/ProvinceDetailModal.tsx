@@ -26,10 +26,10 @@ import { PlaceLightbox } from '@/components/PlaceLightbox';
 import { WeatherScene, sceneFor, SCENE_BACKGROUND, SCENE_LABEL, SCENE_ICON } from '@/components/WeatherScene';
 import { Reviewer } from '@/lib/placeReviews';
 import { ProvinceTravel } from '@/data/thailandTravel';
-import { PLACE_PHOTOS } from '@/data/placePhotos';
-import { placeImages } from '@/lib/placeImages';
+import { placeImagesOrCity, isCityPhoto, placeSource } from '@/lib/placeImages';
 import { accessibilityOf, WHEELCHAIR_META } from '@/data/placeAccessibility';
 import { WeatherForecast } from '@/lib/types';
+import { stripEmoji } from '@/lib/text';
 import { REGION_META, CATEGORY_META, mapsSearchUrl } from '@/lib/travelMeta';
 import { estimateBudget, estimateCrowd, bangkokNow, CROWD_LEVELS, BudgetTier } from '@/lib/tripEstimates';
 
@@ -50,9 +50,9 @@ const TIER_LABELS: Record<BudgetTier, { label: string; hint: string }> = {
   comfort: { label: 'สบาย', hint: 'เครื่องบิน-รถส่วนตัว / รีสอร์ต' },
 };
 
-const photoOf = (province: string, place: string) => PLACE_PHOTOS[`${province}|${place}`];
+const photoOf = placeSource;
 
-const imagesOf = placeImages;
+const imagesOf = placeImagesOrCity;
 
 const embedUrl = (place: string, province: string) =>
   `https://maps.google.com/maps?q=${encodeURIComponent(`${place} จ.${province}`)}&hl=th&z=13&output=embed`;
@@ -198,6 +198,9 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
               className="absolute inset-0 w-full h-full object-cover animate-fadeIn"
             />
           )}
+          {isCityPhoto(heroImage, province.name, focus.name) && (
+            <span className="absolute top-3 left-3 z-10 text-xs px-2 py-1 rounded bg-black/55 text-white">ยังไม่มีภาพของ{focus.name} · ภาพบรรยากาศจังหวัด{province.name}</span>
+          )}
           <div
             className={`absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/30 to-transparent ${heroImage ? 'cursor-zoom-in' : ''}`}
             onClick={() => heroImage && openLightbox(Math.min(photoIndex, focusImages.length - 1))}
@@ -254,6 +257,9 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                             <div className="on-light w-full h-full flex items-end p-3" style={{ backgroundColor: region.fill }}>
                               <span className="font-display text-xl font-semibold leading-tight text-slate-800 line-clamp-2">{a.name}</span>
                             </div>
+                          )}
+                          {isCityPhoto(cover, province.name, a.name) && (
+                            <span className="absolute bottom-1.5 right-1.5 text-[10px] px-1.5 py-0.5 rounded bg-black/55 text-white">ภาพจังหวัด{province.name}</span>
                           )}
                           <span
                             className="absolute top-1.5 left-1.5 text-[11px] font-semibold px-1.5 py-0.5 rounded text-white"
@@ -482,7 +488,7 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                           </div>
                         </div>
                       </button>
-                      {isToday && <p className="mt-3 text-xs text-white/90 leading-relaxed drop-shadow">{weather.advisory}</p>}
+                      {isToday && <p className="mt-3 text-xs text-white/90 leading-relaxed drop-shadow">{stripEmoji(weather.advisory)}</p>}
                       <div className="mt-4 grid grid-cols-7 gap-1 text-center">
                         {weather.sevenDays.slice(0, 7).map((d, i) => (
                           <button
@@ -665,7 +671,7 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                           type="button"
                           onClick={() => setCustomMode(m)}
                           className={`px-2 py-0.5 rounded-sm transition-colors ${
-                            customMode === m ? 'bg-slate-900 text-white dark:bg-white dark:text-ink-900' : 'text-slate-500 hover:text-slate-900'
+                            customMode === m ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:text-slate-900'
                           }`}
                           aria-pressed={customMode === m}
                         >

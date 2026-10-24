@@ -31,7 +31,7 @@ const ScoreButtons: React.FC<{ value: number; onChange: (n: number) => void; lab
         aria-pressed={s === value}
         onClick={() => onChange(s)}
         className={`h-8 rounded text-xs font-mono font-semibold transition-colors ${
-          s <= value ? 'bg-slate-900 text-white dark:bg-white dark:text-ink-900' : 'text-slate-400 hover:text-slate-900'
+          s <= value ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-900'
         }`}
       >
         {s}
@@ -56,18 +56,18 @@ export const TrustReviewTab: React.FC<TrustReviewTabProps> = ({
   const [honestyRating, setHonestyRating] = useState<number>(5);
   const [comment, setComment] = useState<string>('');
   const [selectedBadges, setSelectedBadges] = useState<string[]>([
-    '💎 ซื่อสัตย์โปร่งใส',
-    '⏰ ตรงต่อเวลา',
+    'ซื่อสัตย์โปร่งใส',
+    'ตรงต่อเวลา',
   ]);
 
   const AVAILABLE_BADGES = [
-    '👑 Super Host',
-    '💎 ซื่อสัตย์โปร่งใส',
-    '⏰ ตรงต่อเวลา',
-    '🌟 สมาชิกดีเด่น',
-    '📸 ตากล้องมือทอง',
-    '🤝 ช่วยเหลือเพื่อนร่วมทริป',
-    '⚠️ ควรปรับปรุงเรื่องตรงเวลา',
+    'Super Host',
+    'ซื่อสัตย์โปร่งใส',
+    'ตรงต่อเวลา',
+    'สมาชิกดีเด่น',
+    'ตากล้องมือทอง',
+    'ช่วยเหลือเพื่อนร่วมทริป',
+    'ควรปรับปรุงเรื่องตรงเวลา',
   ];
 
   const toggleBadge = (badge: string) => {
@@ -105,7 +105,7 @@ export const TrustReviewTab: React.FC<TrustReviewTabProps> = ({
 
   // "ไม่เคยเท" (never flaked) is praise, so only flag the positive forms
   const isWarning = (tag: string) =>
-    tag.includes('⚠️') || tag.includes('ควรปรับปรุง') || (/เคย(ยกเลิก|เท|ถูกหัก)/.test(tag) && !tag.includes('ไม่เคย'));
+    tag.includes('ควรปรับปรุง') || (/เคย(ยกเลิก|เท|ถูกหัก)/.test(tag) && !tag.includes('ไม่เคย'));
 
   return (
     <div className="space-y-12">
@@ -357,7 +357,7 @@ export const TrustReviewTab: React.FC<TrustReviewTabProps> = ({
                           isSelected
                             ? isWarning(b)
                               ? 'bg-rose-600 border-rose-600 text-white'
-                              : 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:text-ink-900'
+                              : 'bg-emerald-600 border-emerald-600 text-white'
                             : 'border-slate-200 text-slate-600 hover:border-slate-400'
                         }`}
                       >

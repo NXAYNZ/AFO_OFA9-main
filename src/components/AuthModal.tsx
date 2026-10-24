@@ -115,7 +115,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </p>
               <button
                 onClick={onDemoSignIn}
-                className="mt-2.5 w-full h-10 flex items-center justify-center gap-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors dark:bg-white dark:text-ink-900 dark:hover:bg-ink-100"
+                className="mt-2.5 w-full h-10 flex items-center justify-center gap-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors "
               >
                 <FlaskConical className="w-4 h-4" />
                 ทดลองสร้างโปรไฟล์แบบ Demo

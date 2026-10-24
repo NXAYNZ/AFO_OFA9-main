@@ -7,8 +7,8 @@
   --foreground: #13233a;
   --surface: #ffffff;
   --rule: #dddad1;
-  --accent: #1a7d71;
-  --focus: #1a7d71;
+  --accent: #0057ff;
+  --focus: #0057ff;
   --ticket-notch: var(--background);
 }
 html.dark {
@@ -19,6 +19,143 @@ html.dark {
   --accent: #3b978a;
   --focus: #6fb4a8;
 }
+
+/* Palette channels (see palette() in tailwind.config.ts) */
+:root {
+  --c-ink-50: 245 244 240;
+  --c-ink-100: 236 235 229;
+  --c-ink-200: 221 218 209;
+  --c-ink-300: 196 192 181;
+  --c-ink-400: 143 145 150;
+  --c-ink-500: 95 104 118;
+  --c-ink-600: 71 81 99;
+  --c-ink-700: 52 62 79;
+  --c-ink-800: 33 44 61;
+  --c-ink-900: 19 35 58;
+  --c-ink-950: 10 20 34;
+  --c-lagoon-50: 235 244 241;
+  --c-lagoon-100: 209 231 226;
+  --c-lagoon-200: 165 209 200;
+  --c-lagoon-300: 111 180 168;
+  --c-lagoon-400: 59 151 138;
+  --c-lagoon-500: 26 125 113;
+  --c-lagoon-600: 18 108 97;
+  --c-lagoon-700: 14 89 81;
+  --c-lagoon-800: 12 71 65;
+  --c-lagoon-900: 11 58 53;
+  --c-lagoon-950: 6 37 33;
+  --c-gulf-50: 238 242 247;
+  --c-gulf-100: 220 228 239;
+  --c-gulf-200: 188 202 221;
+  --c-gulf-300: 143 166 196;
+  --c-gulf-400: 102 131 168;
+  --c-gulf-500: 69 101 144;
+  --c-gulf-600: 52 80 122;
+  --c-gulf-700: 42 65 101;
+  --c-gulf-800: 33 51 82;
+  --c-gulf-900: 26 41 66;
+  --c-gulf-950: 17 27 45;
+  --c-saffron-50: 251 244 232;
+  --c-saffron-100: 246 229 198;
+  --c-saffron-200: 237 203 142;
+  --c-saffron-300: 226 174 87;
+  --c-saffron-400: 214 149 51;
+  --c-saffron-500: 194 127 30;
+  --c-saffron-600: 166 104 23;
+  --c-saffron-700: 133 82 21;
+  --c-saffron-800: 106 66 22;
+  --c-saffron-900: 87 55 22;
+  --c-saffron-950: 50 29 8;
+  --c-terracotta-50: 251 239 236;
+  --c-terracotta-100: 246 220 213;
+  --c-terracotta-200: 237 185 172;
+  --c-terracotta-300: 224 143 124;
+  --c-terracotta-400: 208 106 83;
+  --c-terracotta-500: 188 77 54;
+  --c-terracotta-600: 161 61 41;
+  --c-terracotta-700: 131 50 35;
+  --c-terracotta-800: 106 42 31;
+  --c-terracotta-900: 87 37 28;
+  --c-terracotta-950: 47 17 12;
+}
+
+/* Blue & white travel-tech theme, applied to the whole site from layout.tsx */
+.theme-blue {
+  --c-ink-50: 248 250 252;
+  --c-ink-100: 241 245 249;
+  --c-ink-200: 226 232 240;
+  --c-ink-300: 203 213 225;
+  --c-ink-400: 148 163 184;
+  --c-ink-500: 100 116 139;
+  --c-ink-600: 71 85 105;
+  --c-ink-700: 51 65 85;
+  --c-ink-800: 30 41 59;
+  --c-ink-900: 15 23 42;
+  --c-ink-950: 11 25 44;
+  --c-lagoon-50: 239 246 255;
+  --c-lagoon-100: 219 234 254;
+  --c-lagoon-200: 191 219 254;
+  --c-lagoon-300: 147 197 253;
+  --c-lagoon-400: 96 165 250;
+  --c-lagoon-500: 47 114 255;
+  --c-lagoon-600: 0 87 255;
+  --c-lagoon-700: 29 78 216;
+  --c-lagoon-800: 30 64 175;
+  --c-lagoon-900: 30 58 138;
+  --c-lagoon-950: 23 37 84;
+  --c-gulf-50: 240 249 255;
+  --c-gulf-100: 224 242 254;
+  --c-gulf-200: 186 230 253;
+  --c-gulf-300: 125 211 252;
+  --c-gulf-400: 56 189 248;
+  --c-gulf-500: 14 165 233;
+  --c-gulf-600: 2 132 199;
+  --c-gulf-700: 3 105 161;
+  --c-gulf-800: 7 89 133;
+  --c-gulf-900: 12 74 110;
+  --c-gulf-950: 8 47 73;
+  --c-saffron-50: 255 251 235;
+  --c-saffron-100: 254 243 199;
+  --c-saffron-200: 253 230 138;
+  --c-saffron-300: 252 211 77;
+  --c-saffron-400: 251 191 36;
+  --c-saffron-500: 245 158 11;
+  --c-saffron-600: 217 119 6;
+  --c-saffron-700: 180 83 9;
+  --c-saffron-800: 146 64 14;
+  --c-saffron-900: 120 53 15;
+  --c-saffron-950: 69 26 3;
+  --c-terracotta-50: 254 242 242;
+  --c-terracotta-100: 254 226 226;
+  --c-terracotta-200: 254 202 202;
+  --c-terracotta-300: 252 165 165;
+  --c-terracotta-400: 248 113 113;
+  --c-terracotta-500: 239 68 68;
+  --c-terracotta-600: 220 38 38;
+  --c-terracotta-700: 185 28 28;
+  --c-terracotta-800: 153 27 27;
+  --c-terracotta-900: 127 29 29;
+  --c-terracotta-950: 69 10 10;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --surface: #ffffff;
+  --rule: #e2e8f0;
+  --accent: #0057ff;
+  --focus: #0057ff;
+  --ticket-notch: #f8fafc;
+  --font-ui: var(--font-prompt);
+  --font-display: var(--font-prompt);
+  --r-sm: 6px;
+  --r-base: 8px;
+  --r-md: 10px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-2xl: 20px;
+  --r-3xl: 24px;
+  color-scheme: light;
+}
+.theme-blue ::selection { background: #dbeafe; color: #0f172a; }
+.theme-blue .font-display { letter-spacing: 0; font-weight: 700; }
 
 body {
   color: var(--foreground);
@@ -64,12 +201,12 @@ html.dark * { scrollbar-color: #2c3e5b transparent; }
   border: 1px solid var(--rule);
 }
 .glass-panel-dark {
-  background: #13233a;
-  border: 1px solid #212c3d;
+  background: #0f172a;
+  border: 1px solid #1e293b;
 }
-.gradient-brand { background: #1a7d71; }
+.gradient-brand { background: #0057ff; }
 .gradient-card-subtle { background: var(--surface); }
-.gradient-fintech { background: #13233a; }
+.gradient-fintech { background: #0f172a; }
 
 /* Ticket: the signature for anything with money attached. A body and a stub split by a
    perforated rule with half-circle notches cut from the page ground. */
@@ -368,7 +505,6 @@ html.dark .region-card:hover { filter: brightness(1.06); }
   transition: fill 0.25s ease, opacity 0.25s ease;
 }
 .map-province-hover {
-  filter: drop-shadow(0 3px 6px rgba(15, 23, 42, 0.35));
   pointer-events: none;
 }
 
@@ -403,3 +539,244 @@ html.dark .region-card:hover { filter: brightness(1.06); }
 /* Chart series (validated categorical order: subscription, affiliate, creation fee, penalty) */
 :root { --series-1: #3a62b0; --series-2: #c98a1a; --series-3: #0e8a78; --series-4: #c4532f; }
 html.dark { --series-1: #6d90d8; --series-2: #b8862a; --series-3: #2aa58f; --series-4: #df6c48; }
+
+/* Home hero: destination photos crossfade with a slow drift */
+.hero-slide {
+  opacity: 0;
+  transform: scale(1.04);
+  transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 8s linear;
+}
+.hero-slide.is-active { opacity: 1; transform: scale(1); }
+@keyframes hero-progress { from { width: 0; } to { width: 100%; } }
+.hero-progress { animation: hero-progress linear both; }
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide { transition: opacity 0.2s linear; transform: none; }
+  .hero-slide.is-active { transform: none; }
+  .hero-progress { animation: none; width: 100%; }
+}
+html.reduce-motion .hero-progress { animation: none; width: 100%; }
+
+/* ---------- "เริ่มใช้งานฟรี" button and launch transition ---------- */
+.btn-start {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: #0057ff;
+  box-shadow: 0 8px 20px -8px rgb(0 87 255 / 0.6);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.btn-start::before {
+  /* Sheen that sweeps across on hover */
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.35) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-start:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 12px 26px -10px rgb(0 87 255 / 0.7); }
+.btn-start:hover::before { transform: translateX(120%); }
+.btn-start:active { transform: translateY(0) scale(0.96); }
+.btn-start::after {
+  /* Soft pulse ring that invites the first click */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 0 rgb(0 87 255 / 0.45);
+  animation: start-pulse 2.6s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes start-pulse {
+  0%, 60% { box-shadow: 0 0 0 0 rgb(0 87 255 / 0.45); }
+  100% { box-shadow: 0 0 0 12px rgb(0 87 255 / 0); }
+}
+
+.launch-overlay {
+  background: radial-gradient(circle at var(--lx) var(--ly), #2f72ff 0%, #0057ff 35%, #0b192c 100%);
+  clip-path: circle(0 at var(--lx) var(--ly));
+  animation: launch-reveal 0.6s cubic-bezier(0.7, 0, 0.2, 1) forwards;
+}
+@keyframes launch-reveal {
+  to { clip-path: circle(150vmax at var(--lx) var(--ly)); }
+}
+.launch-content { opacity: 0; animation: launch-fade 0.35s 0.35s ease-out forwards; }
+@keyframes launch-fade {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.launch-plane { animation: launch-fly 0.9s 0.35s cubic-bezier(0.5, 0, 0.2, 1) both; }
+@keyframes launch-fly {
+  0% { left: 0; transform: translateY(-50%) rotate(0deg) scale(0.8); }
+  60% { transform: translateY(-80%) rotate(-12deg) scale(1); }
+  100% { left: calc(100% - 3.5rem); transform: translateY(-120%) rotate(-18deg) scale(1.05); }
+}
+.launch-trail {
+  background: repeating-linear-gradient(90deg, rgb(255 255 255 / 0.7) 0 10px, transparent 10px 18px);
+  transform-origin: left center;
+  transform: scaleX(0);
+  animation: launch-trail 0.9s 0.35s cubic-bezier(0.5, 0, 0.2, 1) forwards;
+}
+@keyframes launch-trail { to { transform: scaleX(1); } }
+.launch-bar span { width: 0; animation: launch-progress 0.75s 0.35s ease-in-out forwards; }
+@keyframes launch-progress { to { width: 100%; } }
+
+/* The app arrives with a short rise, continuing the launch */
+.app-enter { animation: app-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes app-enter {
+  from { opacity: 0; transform: translateY(18px) scale(0.99); }
+  to { opacity: 1; transform: none; }
+}
+.app-enter-header { animation: app-enter-header 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes app-enter-header {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-start, .btn-start::before { transition: none; }
+  .btn-start::after, .launch-overlay, .launch-content, .launch-plane, .launch-trail, .launch-bar span, .app-enter, .app-enter-header { animation: none; }
+}
+html.reduce-motion .btn-start::after { animation: none; }
+
+/* ---------- Site motion ---------- */
+/* Scroll reveal: .reveal fades up when it enters the viewport; --i staggers siblings */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+.reveal.is-in { opacity: 1; transform: none; }
+.reveal-scale { transform: translateY(18px) scale(0.97); }
+.reveal-left { transform: translateX(-28px); }
+.reveal-right { transform: translateX(28px); }
+
+/* Hero entrance */
+.hero-in { opacity: 0; animation: hero-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: calc(var(--i, 0) * 110ms + 120ms); }
+@keyframes hero-in {
+  from { opacity: 0; transform: translateY(28px); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+.hero-photo { animation: hero-zoom 18s ease-out both; transform-origin: 60% 40%; }
+@keyframes hero-zoom { from { transform: scale(1.12); } to { transform: scale(1); } }
+.hero-script { animation: hero-script 1.4s 0.7s cubic-bezier(0.65, 0, 0.35, 1) both; }
+@keyframes hero-script {
+  from { clip-path: inset(0 100% 0 0); opacity: 0.4; }
+  to { clip-path: inset(0 0 0 0); opacity: 1; }
+}
+.float-y { animation: float-y 3.6s ease-in-out infinite; }
+@keyframes float-y { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.hero-search { opacity: 0; animation: hero-search 0.9s 0.55s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes hero-search {
+  from { opacity: 0; transform: translateY(40px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Cards and tiles */
+.lift { transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.2s ease; }
+.lift:hover { transform: translateY(-4px); box-shadow: 0 18px 36px -18px rgb(15 23 42 / 0.28); }
+.tile-icon { transition: transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1), background-color 0.2s ease, color 0.2s ease; }
+.group:hover .tile-icon { transform: translateY(-3px) rotate(-6deg) scale(1.08); }
+.press { transition: transform 0.15s ease; }
+.press:active { transform: scale(0.96); }
+
+/* Planner */
+.stop-in { animation: stop-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: calc(var(--i, 0) * 80ms); }
+@keyframes stop-in {
+  from { opacity: 0; transform: translateX(-14px); }
+  to { opacity: 1; transform: none; }
+}
+.route-ants { animation: route-ants 1.2s linear infinite; }
+@keyframes route-ants { to { stroke-dashoffset: -22; } }
+.pin-drop { animation: pin-drop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: calc(var(--i, 0) * 140ms + 150ms); transform-box: fill-box; transform-origin: bottom center; }
+@keyframes pin-drop {
+  from { opacity: 0; transform: translateY(-14px) scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+.pin-pulse { animation: pin-pulse 2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes pin-pulse {
+  0% { opacity: 0.55; transform: scale(0.4); }
+  100% { opacity: 0; transform: scale(2.2); }
+}
+.status-pop { animation: status-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+@keyframes status-pop { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: none; } }
+.thinking-bar { position: relative; overflow: hidden; }
+.thinking-bar::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(0 87 255 / 0.18), transparent);
+  animation: thinking 0.9s ease-in-out infinite;
+}
+@keyframes thinking { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+/* Pricing card glow */
+.glow-card { position: relative; isolation: isolate; overflow: hidden; }
+.glow-card::before {
+  content: ''; position: absolute; width: 140%; aspect-ratio: 1; left: -20%; top: -70%; z-index: -1;
+  background: radial-gradient(circle, rgb(0 87 255 / 0.45), transparent 60%);
+  animation: glow-drift 9s ease-in-out infinite alternate;
+}
+@keyframes glow-drift { from { transform: translate(-12%, 0); } to { transform: translate(18%, 12%); } }
+
+/* App: tab content switches with a short rise */
+.tab-in { animation: app-enter 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.nav-underline { animation: nav-underline 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: center; }
+@keyframes nav-underline { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal-scale, .reveal-left, .reveal-right { opacity: 1; transform: none; transition: none; }
+  .hero-in, .hero-photo, .hero-script, .float-y, .hero-search, .stop-in, .route-ants, .pin-drop, .pin-pulse, .status-pop, .thinking-bar::after, .glow-card::before, .tab-in, .nav-underline { animation: none; opacity: 1; }
+  .lift:hover, .group:hover .tile-icon { transform: none; }
+}
+html.reduce-motion .reveal { opacity: 1; transform: none; }
+
+/* ---------- Thai touches on the Thailand map ---------- */
+.thai-map-panel {
+  background-color: #f2f8ff;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2244%22%20height%3D%2244%22%20viewBox%3D%220%200%2044%2044%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23C9A227%22%20stroke-opacity%3D%220.22%22%20stroke-width%3D%221.2%22%3E%3Cpath%20d%3D%22M22%204%20L40%2022%20L22%2040%20L4%2022%20Z%22%2F%3E%3Cpath%20d%3D%22M22%2012%20C26%2016%2026%2019%2022%2022%20C18%2019%2018%2016%2022%2012%20Z%20M22%2032%20C18%2028%2018%2025%2022%2022%20C26%2025%2026%2028%2022%2032%20Z%20M12%2022%20C16%2018%2019%2018%2022%2022%20C19%2026%2016%2026%2012%2022%20Z%20M32%2022%20C28%2026%2025%2026%2022%2022%20C25%2018%2028%2018%2032%2022%20Z%22%2F%3E%3Ccircle%20cx%3D%2222%22%20cy%3D%2222%22%20r%3D%221.6%22%20fill%3D%22%23C9A227%22%20fill-opacity%3D%220.22%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"), linear-gradient(180deg, #fff8e8 0%, #eef6ff 55%, #e6f3ff 100%);
+  background-size: 44px 44px, 100% 100%;
+}
+.thai-band { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2210%22%20viewBox%3D%220%200%2020%2010%22%3E%3Crect%20width%3D%2220%22%20height%3D%2210%22%20fill%3D%22%23B8860B%22%2F%3E%3Cpath%20d%3D%22M10%201%20L15%205%20L10%209%20L5%205%20Z%22%20fill%3D%22%23FFD25E%22%2F%3E%3Ccircle%20cx%3D%2210%22%20cy%3D%225%22%20r%3D%221.3%22%20fill%3D%22%23B8860B%22%2F%3E%3Ccircle%20cx%3D%220%22%20cy%3D%225%22%20r%3D%221.4%22%20fill%3D%22%23FFE9A8%22%2F%3E%3Ccircle%20cx%3D%2220%22%20cy%3D%225%22%20r%3D%221.4%22%20fill%3D%22%23FFE9A8%22%2F%3E%3C%2Fsvg%3E"); background-size: 20px 10px; background-repeat: repeat-x; opacity: 0.9; }
+.thai-map-panel > *:not([aria-hidden]) { position: relative; z-index: 1; }
+
+/* Sky lanterns (โคมลอย) rising slowly behind the map */
+.khom-loi {
+  position: absolute;
+  bottom: -40px;
+  width: 14px;
+  height: 18px;
+  border-radius: 6px 6px 4px 4px / 8px 8px 4px 4px;
+  background: linear-gradient(180deg, #ffe7a3 0%, #ffb547 70%, #f08a24 100%);
+  box-shadow: 0 0 14px 4px rgb(255 190 80 / 0.45);
+  opacity: 0;
+  animation: khom-loi linear infinite;
+}
+.khom-loi::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -3px;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: #fff3c4;
+  box-shadow: 0 0 6px 2px #ffd36b;
+}
+@keyframes khom-loi {
+  0% { transform: translate(0, 0) rotate(-3deg) scale(0.8); opacity: 0; }
+  10% { opacity: 0.85; }
+  50% { transform: translate(18px, -55vh) rotate(4deg) scale(0.7); }
+  85% { opacity: 0.6; }
+  100% { transform: translate(-10px, -110vh) rotate(-2deg) scale(0.55); opacity: 0; }
+}
+
+/* Province hover: a soft golden glow, like gilt on a temple map */
+.map-province:hover { filter: brightness(1.04); }
+.map-province-hover { filter: drop-shadow(0 0 6px rgb(255 196 61 / 0.85)) drop-shadow(0 3px 6px rgba(15, 23, 42, 0.25)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .khom-loi { animation: none; display: none; }
+}
+html.reduce-motion .khom-loi { display: none; }

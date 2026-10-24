@@ -74,7 +74,7 @@ export const estimateBudget = (p: ProvinceTravel, days: number, people: number):
 // ---------------- Crowd estimate ----------------
 
 export const CROWD_LEVELS = [
-  { label: 'เงียบ', color: '#126c61' },
+  { label: 'เงียบ', color: '#0057FF' },
   { label: 'คนน้อย', color: '#3f7d5c' },
   { label: 'ปานกลาง', color: '#a66817' },
   { label: 'ค่อนข้างแน่น', color: '#b4552f' },

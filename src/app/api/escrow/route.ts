@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
           refundedToUser,
           subsidyPerRemainingMember,
           transactions: [platformTx, poolTx],
-          updatedWarningTag: '⚠️ เคยเททริปกระทันหัน (ถูกหักเงินมัดจำ 10% ตามสัญญา Escrow)',
+          updatedWarningTag: 'เคยเททริปกระทันหัน (ถูกหักเงินมัดจำ 10% ตามสัญญา Escrow)',
         });
       }
 

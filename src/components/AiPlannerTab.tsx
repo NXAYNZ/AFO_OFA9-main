@@ -244,7 +244,7 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
                     aria-pressed={on}
                     onClick={() => setProvince(dest.label)}
                     className={`h-8 px-3 rounded-md text-xs font-medium border transition-colors ${
-                      on ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:text-ink-900' : 'border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900'
+                      on ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900'
                     }`}
                   >
                     {dest.label}
@@ -365,7 +365,7 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
                     type="button"
                     onClick={() => setTotalBudget(p)}
                     className={`h-7 px-2 rounded text-xs font-mono transition-colors ${
-                      totalBudget === p ? 'bg-slate-900 text-white dark:bg-white dark:text-ink-900' : 'text-slate-600 hover:bg-slate-100'
+                      totalBudget === p ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >
                     {(p / 1000).toFixed(1)}k
@@ -461,7 +461,7 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
                       aria-pressed={preferences[key] === o.id}
                       onClick={() => setPreferences((p) => ({ ...p, [key]: o.id }))}
                       className={`h-9 rounded text-xs font-medium transition-colors ${
-                        preferences[key] === o.id ? 'bg-slate-900 text-white dark:bg-white dark:text-ink-900' : 'text-slate-500 hover:text-slate-900'
+                        preferences[key] === o.id ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:text-slate-900'
                       }`}
                     >
                       {stripEmoji(o.label)}
@@ -625,7 +625,7 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
                     aria-selected={selectedPlanIndex === idx}
                     onClick={() => setSelectedPlanIndex(idx)}
                     className={`h-10 px-3.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
-                      selectedPlanIndex === idx ? 'bg-slate-900 text-white dark:bg-white dark:text-ink-900' : 'text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
+                      selectedPlanIndex === idx ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
                     }`}
                   >
                     {p.title.split(':')[0] || `แผน ${idx + 1}`}
@@ -648,8 +648,8 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
                 {/* Plan summary */}
                 <div className="p-5 sm:p-7 flex flex-col md:flex-row md:items-start justify-between gap-6 border-b border-slate-200">
                   <div className="min-w-0">
-                    <h4 className="font-display text-xl sm:text-2xl font-semibold text-slate-900 leading-snug">{plan.title}</h4>
-                    <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">{plan.tagline}</p>
+                    <h4 className="font-display text-xl sm:text-2xl font-semibold text-slate-900 leading-snug">{stripEmoji(plan.title)}</h4>
+                    <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">{stripEmoji(plan.tagline)}</p>
                     <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
                       <div className="flex items-center gap-1.5 text-slate-700">
                         <dt><Car className="w-4 h-4 text-slate-400" aria-label="การเดินทาง" /></dt>
@@ -693,10 +693,10 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
                             <span aria-hidden className="relative z-10 mt-1.5 w-3 h-3 rounded-full border-2 border-emerald-600 bg-white dark:bg-ink-900" />
                             <div className="min-w-0">
                               <div className="text-sm font-semibold text-slate-900">{stripEmoji(act.title)}</div>
-                              <div className="mt-0.5 text-sm text-slate-600 leading-relaxed">{act.description}</div>
+                              <div className="mt-0.5 text-sm text-slate-600 leading-relaxed">{stripEmoji(act.description)}</div>
                               <div className="mt-1 text-xs text-slate-500 flex items-center gap-1">
                                 <MapPin className="w-3 h-3" />
-                                {act.location}
+                                {stripEmoji(act.location)}
                               </div>
                             </div>
                             <span className="font-mono text-sm text-slate-700 pt-px">฿{act.estimatedCost.toLocaleString()}</span>

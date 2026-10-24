@@ -24,8 +24,9 @@ export const saveSettings = (settings: DisplaySettings): void => {
   } catch (e) {}
 };
 
-export const resolveDark = (theme: ThemePreference): boolean =>
-  theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+// The blue & white site is light only; the stored preference is kept but no longer applied
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const resolveDark = (_theme: ThemePreference): boolean => false;
 
 export const applySettings = (settings: DisplaySettings): void => {
   const root = document.documentElement;
@@ -33,5 +34,5 @@ export const applySettings = (settings: DisplaySettings): void => {
   root.classList.toggle('reduce-motion', settings.reduceMotion);
 };
 
-// Inline <head> script: applies the saved theme before first paint so dark mode does not flash white
-export const THEME_INIT_SCRIPT = `(function(){try{var s=JSON.parse(localStorage.getItem('${SETTINGS_KEY}')||'{}');var t=s.theme||'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);var r=document.documentElement;if(d)r.classList.add('dark');if(s.reduceMotion)r.classList.add('reduce-motion');}catch(e){}})();`;
+// Inline <head> script: applies the saved reduced-motion preference before first paint
+export const THEME_INIT_SCRIPT = `(function(){try{var s=JSON.parse(localStorage.getItem('${SETTINGS_KEY}')||'{}');if(s.reduceMotion)document.documentElement.classList.add('reduce-motion');}catch(e){}})();`;
