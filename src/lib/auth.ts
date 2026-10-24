@@ -104,9 +104,9 @@ export const signInWithGoogle = async (): Promise<string | null> => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}/auth/callback`
-      queryParams: { prompt: 'select_account' },
-    },
+  redirectTo: `${window.location.origin}/auth/callback`,
+  queryParams: { prompt: 'select_account' },
+},
   });
   return error ? error.message : null;
 };
