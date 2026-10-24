@@ -165,6 +165,173 @@ body {
   }
 }
 
+/* Animated weather scene (province window) */
+@keyframes wx-cloud-drift {
+  from { left: -45%; }
+  to { left: 110%; }
+}
+.wx-cloud {
+  animation: wx-cloud-drift linear infinite;
+  filter: drop-shadow(0 4px 6px rgba(15, 23, 42, 0.15));
+}
+
+@keyframes wx-spin {
+  to { transform: rotate(360deg); }
+}
+.wx-sun-rays {
+  background: repeating-conic-gradient(from 0deg, rgba(254, 240, 138, 0.55) 0deg 8deg, transparent 8deg 24deg);
+  mask-image: radial-gradient(circle, #000 35%, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle, #000 35%, transparent 70%);
+  animation: wx-spin 24s linear infinite;
+}
+
+@keyframes wx-sun-glow {
+  0%, 100% { box-shadow: 0 0 30px 8px rgba(253, 224, 71, 0.55); }
+  50% { box-shadow: 0 0 46px 16px rgba(253, 224, 71, 0.75); }
+}
+.wx-sun {
+  background: radial-gradient(circle at 40% 40%, #fef9c3, #facc15 55%, #f59e0b);
+  animation: wx-sun-glow 3.5s ease-in-out infinite;
+}
+@keyframes wx-sun-flare {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.35); box-shadow: 0 0 80px 36px rgba(253, 224, 71, 0.9); }
+  100% { transform: scale(1); }
+}
+.wx-sun-flare {
+  animation: wx-sun-flare 0.9s cubic-bezier(0.34, 1.56, 0.64, 1), wx-sun-glow 3.5s ease-in-out 0.9s infinite;
+}
+
+.wx-moon {
+  box-shadow: inset 14px -6px 0 0 #fef3c7;
+  filter: drop-shadow(0 0 14px rgba(254, 243, 199, 0.6));
+  animation: fade-in 0.8s ease-out both;
+}
+@keyframes wx-twinkle {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+.wx-star {
+  animation: wx-twinkle 2.6s ease-in-out infinite;
+}
+
+@keyframes wx-fall {
+  from { top: -12%; }
+  to { top: 108%; }
+}
+.wx-drop {
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(224, 242, 254, 0.95));
+  animation: wx-fall linear infinite;
+}
+.wx-rain-slant {
+  transform: rotate(14deg) scale(1.15);
+}
+@keyframes wx-burst-fade {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.wx-rain-burst {
+  animation: wx-burst-fade 2.2s ease-out forwards;
+}
+
+/* Periodic lightning: two quick flickers near the end of each 7s cycle */
+@keyframes wx-flash {
+  0%, 86%, 89%, 92%, 100% { opacity: 0; }
+  87% { opacity: 0.55; }
+  90.5% { opacity: 0.35; }
+}
+.wx-flash {
+  animation: wx-flash 7s linear infinite;
+}
+.wx-bolt {
+  opacity: 0;
+  filter: drop-shadow(0 0 10px rgba(253, 230, 138, 0.9));
+  animation: wx-flash 7s linear infinite;
+}
+@keyframes wx-strike {
+  0% { opacity: 0; }
+  8% { opacity: 0.85; }
+  20% { opacity: 0.1; }
+  30% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+.wx-strike-flash {
+  animation: wx-strike 0.7s ease-out forwards;
+}
+.wx-strike-bolt {
+  opacity: 0;
+  filter: drop-shadow(0 0 14px rgba(254, 249, 195, 1));
+  animation: wx-strike 0.7s ease-out forwards;
+}
+@keyframes wx-rumble {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-3px, 1px); }
+  40% { transform: translate(3px, -1px); }
+  60% { transform: translate(-2px, 1px); }
+  80% { transform: translate(1px, 0); }
+}
+.wx-rumble {
+  animation: wx-rumble 0.45s ease-in-out 0.15s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wx-cloud, .wx-sun-rays, .wx-sun, .wx-sun-flare, .wx-star, .wx-flash, .wx-bolt, .wx-rumble, .wx-rain-burst {
+    animation: none;
+  }
+  .wx-drop, .wx-strike-flash, .wx-strike-bolt {
+    display: none;
+  }
+}
+
+/* Region cards in the map side panel: soft tint in light mode, full pastel + dark text in dark mode */
+.region-card { background-color: color-mix(in srgb, var(--region-fill) 40%, transparent); }
+html.dark .region-card { background-color: var(--region-fill); border-color: transparent; }
+html.dark .region-card:hover { filter: brightness(1.06); }
+
+/* Crown over provinces holding a region top-3 place */
+@keyframes map-crown-bob {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-3px) rotate(4deg); }
+}
+.map-crown {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  filter: drop-shadow(0 2px 3px rgba(120, 53, 15, 0.45));
+  animation: map-crown-bob 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-crown {
+    animation: none;
+  }
+}
+
+/* Goal flag dropping onto the selected province */
+@keyframes map-flag-drop {
+  0% { transform: translateY(-18px) scale(0.6); opacity: 0; }
+  60% { transform: translateY(2px) scale(1.05); opacity: 1; }
+  100% { transform: translateY(0) scale(1); }
+}
+.map-flag-drop {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  animation: map-flag-drop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-flag-drop {
+    animation: none;
+  }
+}
+
+/* Thailand map provinces */
+.map-province {
+  cursor: pointer;
+  transition: fill 0.25s ease, opacity 0.25s ease;
+}
+.map-province-hover {
+  filter: drop-shadow(0 3px 6px rgba(15, 23, 42, 0.35));
+  pointer-events: none;
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

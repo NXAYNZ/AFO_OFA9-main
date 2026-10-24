@@ -170,7 +170,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
               <ul className="space-y-3 text-xs text-slate-700">
                 <li className="flex items-center space-x-2">
                   <Check className="w-4 h-4 text-indigo-600 shrink-0" />
-                  <span>AI วางแผนเที่ยว <strong>10 ครั้ง / เดือน</strong></span>
+                  <span>AI วางแผนเที่ยว <strong>ไม่จำกัดจำนวนครั้ง</strong></span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <Check className="w-4 h-4 text-indigo-600 shrink-0" />

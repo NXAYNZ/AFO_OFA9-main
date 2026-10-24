@@ -1,4 +1,5 @@
 import { WeatherForecast, WeatherDay } from './types';
+import { PROVINCE_TRAVEL } from '@/data/thailandTravel';
 
 export interface ProvinceLocation {
   name: string;
@@ -127,7 +128,7 @@ async function fetchOpenMeteoWeather(
 ): Promise<WeatherForecast> {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&current_weather=true&timezone=Asia%2FBangkok`;
 
-  const res = await fetch(url, { next: { revalidate: 3600 } });
+  const res = await fetch(url, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(6000) });
   if (!res.ok) throw new Error(`Open-Meteo error: ${res.statusText}`);
 
   const data = await res.json();
@@ -169,8 +170,12 @@ async function fetchOpenMeteoWeather(
 /**
  * Mock Fallback Weather when offline or API is unreachable
  */
-function getMockFallbackWeather(provinceKey: string, season: 'HIGH' | 'LOW' | 'SHOULDER'): WeatherForecast {
-  const loc = THAI_PROVINCES[provinceKey] || THAI_PROVINCES.rayong;
+function getMockFallbackWeather(
+  provinceKey: string,
+  season: 'HIGH' | 'LOW' | 'SHOULDER',
+  locOverride?: ProvinceLocation
+): WeatherForecast {
+  const loc = locOverride || THAI_PROVINCES[provinceKey] || THAI_PROVINCES.rayong;
   const isHigh = season === 'HIGH';
   const baseRain = isHigh ? 15 : 65;
 
@@ -203,17 +208,230 @@ function getMockFallbackWeather(provinceKey: string, season: 'HIGH' | 'LOW' | 'S
   };
 }
 
-/**
- * Main Weather Service for Thailand:
- * 1. Checks TMD API if TMD_API_TOKEN is set.
- * 2. Fallbacks to Open-Meteo free real-time API.
- * 3. Gracefully uses rich Thai mock data if network fails.
- */
-export async function getThailandWeather(provinceQuery: string, dateString?: string): Promise<WeatherForecast> {
-  const season = detectThailandSeason(dateString);
+// --- Thai Meteorological Department (TMD) NWP API ---
+// Docs: https://data.tmd.go.th/nwpapi/doc/ (register there for a Bearer token)
 
-  // Match province key
-  let matchedKey = 'rayong';
+const TMD_BASE = 'https://data.tmd.go.th/nwpapi/v1/forecast/location';
+// TMD rate-limits per token, so share results across visitors for a while
+const TMD_REVALIDATE_SECONDS = 900;
+
+// TMD "cond" codes 1-12
+const TMD_CONDITIONS: Record<number, { condition: string; icon: string }> = {
+  1: { condition: 'ท้องฟ้าแจ่มใส', icon: '☀️' },
+  2: { condition: 'มีเมฆบางส่วน', icon: '⛅' },
+  3: { condition: 'เมฆเป็นส่วนมาก', icon: '🌥️' },
+  4: { condition: 'มีเมฆมาก', icon: '☁️' },
+  5: { condition: 'ฝนตกเล็กน้อย', icon: '🌦️' },
+  6: { condition: 'ฝนปานกลาง', icon: '🌧️' },
+  7: { condition: 'ฝนตกหนัก', icon: '🌧️' },
+  8: { condition: 'ฝนฟ้าคะนอง', icon: '⛈️' },
+  9: { condition: 'อากาศหนาวจัด', icon: '🥶' },
+  10: { condition: 'อากาศหนาว', icon: '❄️' },
+  11: { condition: 'อากาศเย็น', icon: '🌬️' },
+  12: { condition: 'อากาศร้อนจัด', icon: '🥵' },
+};
+
+/**
+ * TMD publishes rainfall (mm) and a condition code but no rain probability.
+ * The app's crowd/advisory logic needs a 0-100 value, so derive a rough rain index from both.
+ * The UI shows the TMD rainfall in mm instead of this number.
+ */
+function tmdRainIndex(cond: number, rainMm: number): number {
+  const byCond: Record<number, number> = { 5: 55, 6: 70, 7: 90, 8: 80 };
+  if (byCond[cond]) return byCond[cond];
+  if (rainMm >= 10) return 70;
+  if (rainMm >= 1) return 40;
+  if (rainMm > 0.1) return 20;
+  return 5;
+}
+
+interface TmdForecast {
+  time: string;
+  data: Record<string, number>;
+}
+
+// The docs show several top-level keys ("WeatherForecasts", "WeatherForcasts", "weather_forecast")
+function tmdForecasts(json: any): TmdForecast[] {
+  const root = json?.WeatherForecasts ?? json?.WeatherForcasts ?? json?.weather_forecast ?? json?.weatherForecasts;
+  const location = Array.isArray(root) ? root[0] : root?.locations?.[0];
+  return Array.isArray(location?.forecasts) ? location.forecasts : [];
+}
+
+async function tmdGet(path: string, params: Record<string, string | number>, token: string): Promise<TmdForecast[]> {
+  const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)]));
+  const res = await fetch(`${TMD_BASE}/${path}?${qs}`, {
+    headers: { accept: 'application/json', authorization: `Bearer ${token}` },
+    next: { revalidate: TMD_REVALIDATE_SECONDS },
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!res.ok) throw new Error(`TMD ${path} error: ${res.status} ${res.statusText}`);
+  const forecasts = tmdForecasts(await res.json());
+  if (forecasts.length === 0) throw new Error(`TMD ${path}: empty response`);
+  return forecasts;
+}
+
+// Current date and hour in Thailand time
+function bangkokDateHour(): { date: string; hour: number } {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Bangkok',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date());
+  const get = (type: string) => parts.find((p) => p.type === type)?.value || '';
+  return { date: `${get('year')}-${get('month')}-${get('day')}`, hour: Number(get('hour')) };
+}
+
+async function fetchTmdWeather(
+  loc: ProvinceLocation,
+  season: 'HIGH' | 'LOW' | 'SHOULDER',
+  token: string
+): Promise<WeatherForecast> {
+  const { date, hour } = bangkokDateHour();
+  const at = { lat: loc.latitude, lon: loc.longitude };
+
+  const [daily, hourly] = await Promise.all([
+    tmdGet('daily/at', { ...at, date, duration: 7, fields: 'tc_max,tc_min,rh,rain,cond' }, token),
+    tmdGet('hourly/at', { ...at, date, hour, duration: 1, fields: 'tc,rh,rain,cond' }, token),
+  ]);
+
+  const sevenDays: WeatherDay[] = daily.slice(0, 7).map((f) => {
+    const cond = Math.round(f.data.cond ?? 2);
+    const rainMm = Math.round((f.data.rain ?? 0) * 10) / 10;
+    const meta = TMD_CONDITIONS[cond] || TMD_CONDITIONS[2];
+    return {
+      date: f.time.slice(0, 10),
+      tempMin: Math.round(f.data.tc_min),
+      tempMax: Math.round(f.data.tc_max),
+      rainProbability: tmdRainIndex(cond, rainMm),
+      rainMm,
+      condition: meta.condition,
+      icon: meta.icon,
+    };
+  });
+
+  const now = hourly[0];
+  const nowCond = Math.round(now.data.cond ?? 2);
+  const today = sevenDays[0];
+  const rainIndex = today?.rainProbability ?? 20;
+
+  return {
+    province: loc.thaiName,
+    latitude: loc.latitude,
+    longitude: loc.longitude,
+    currentTemp: Math.round(now.data.tc),
+    rainProbability: rainIndex,
+    season,
+    advisory: generateAdvisory(rainIndex, today?.tempMax ?? 33, loc.thaiName, season),
+    sevenDays,
+    source: 'TMD_API',
+    humidity: now.data.rh !== undefined ? Math.round(now.data.rh) : undefined,
+    currentCondition: (TMD_CONDITIONS[nowCond] || TMD_CONDITIONS[2]).condition,
+    updatedAt: now.time,
+  };
+}
+
+// --- TMD public 7-day province forecast (no registration needed) ---
+// One request returns every province. uid/ukey default to TMD's published demo credentials;
+// set TMD_UID / TMD_UKEY to use your own account from data.tmd.go.th.
+
+const TMD_7DAY_REVALIDATE_SECONDS = 1800;
+
+interface Tmd7DayProvince {
+  ProvinceNameThai: string;
+  ProvinceNameEnglish: string;
+  SevenDaysForecast: {
+    ForecastDate: string[]; // dd/mm/yyyy, newest first
+    MaximumTemperature: string[];
+    MinimumTemperature: string[];
+    PercentRainCover: string[];
+    DescriptionThai: string[];
+  };
+}
+
+// TMD keeps the season's rain wording (e.g. "ฝนฟ้าคะนอง") even at 10% coverage, so the icon follows coverage
+function tmd7DayIcon(description: string, rainCover: number): string {
+  if (description.includes('ฝน')) {
+    if (rainCover >= 40) return description.includes('ฟ้าคะนอง') ? '⛈️' : '🌧️';
+    return rainCover >= 20 ? '🌦️' : '⛅';
+  }
+  if (rainCover >= 40) return '🌦️';
+  if (description.includes('หนาว')) return '❄️';
+  if (description.includes('เย็น')) return '🌬️';
+  if (description.includes('ร้อน')) return '🥵';
+  if (description.includes('เมฆ')) return '⛅';
+  return '☀️';
+}
+
+async function fetchTmd7DayWeather(
+  loc: ProvinceLocation,
+  season: 'HIGH' | 'LOW' | 'SHOULDER'
+): Promise<WeatherForecast> {
+  const uid = process.env.TMD_UID?.trim() || 'api';
+  const ukey = process.env.TMD_UKEY?.trim() || 'api12345';
+  const res = await fetch(
+    `https://data.tmd.go.th/api/WeatherForecast7Days/V2/?uid=${encodeURIComponent(uid)}&ukey=${encodeURIComponent(ukey)}&format=json`,
+    { next: { revalidate: TMD_7DAY_REVALIDATE_SECONDS }, signal: AbortSignal.timeout(10000) }
+  );
+  if (!res.ok) throw new Error(`TMD 7-day error: ${res.status} ${res.statusText}`);
+  const json = await res.json();
+  const provinces: Tmd7DayProvince[] = json?.Provinces?.Province || [];
+
+  // Match the province name inside the location label, e.g. "เกาะเสม็ด จ.ระยอง" -> ระยอง
+  const province = provinces.find((p) => loc.thaiName === p.ProvinceNameThai) ||
+    provinces.find((p) => loc.thaiName.includes(p.ProvinceNameThai));
+  if (!province) throw new Error(`TMD 7-day: no forecast for ${loc.thaiName}`);
+
+  const f = province.SevenDaysForecast;
+  const sevenDays: WeatherDay[] = f.ForecastDate.map((d, i) => {
+    const [day, month, year] = d.split('/');
+    const rainCover = Number(f.PercentRainCover[i]) || 0;
+    const description = f.DescriptionThai[i] || '';
+    return {
+      date: `${year}-${month}-${day}`,
+      tempMin: Math.round(Number(f.MinimumTemperature[i])),
+      tempMax: Math.round(Number(f.MaximumTemperature[i])),
+      rainProbability: rainCover,
+      // TMD phrasing: "ฝนฟ้าคะนอง ร้อยละ 10 ของพื้นที่"
+      condition: description.includes('ฝน') ? `${description} ร้อยละ ${rainCover} ของพื้นที่` : description,
+      icon: tmd7DayIcon(description, rainCover),
+    };
+  }).sort((a, b) => a.date.localeCompare(b.date));
+
+  const today = sevenDays[0];
+  const rain = today?.rainProbability ?? 20;
+
+  // TMD's public feed has forecasts only (its station observation feeds are often empty),
+  // so the current temperature comes from Open-Meteo when it is reachable
+  let currentTemp = today?.tempMax ?? 32;
+  let currentTempSource: WeatherForecast['currentTempSource'] = 'TMD_FORECAST_MAX';
+  try {
+    const live = await fetchOpenMeteoWeather(loc.name, loc, season);
+    currentTemp = live.currentTemp;
+    currentTempSource = 'OPEN_METEO';
+  } catch (e) {}
+
+  return {
+    province: loc.thaiName,
+    latitude: loc.latitude,
+    longitude: loc.longitude,
+    currentTemp,
+    rainProbability: rain,
+    season,
+    advisory: generateAdvisory(rain, today?.tempMax ?? 33, loc.thaiName, season),
+    sevenDays,
+    source: 'TMD_API',
+    rainMetric: 'area',
+    currentCondition: today?.condition,
+    currentTempSource,
+    updatedAt: json?.header?.LastBuildDate ? `${json.header.LastBuildDate.replace(' ', 'T')}+07:00` : undefined,
+  };
+}
+
+// Province from the request text: the curated list first, then any of the 77 map provinces
+function resolveLocation(provinceQuery: string): { key: string; loc: ProvinceLocation } {
   const queryLower = (provinceQuery || '').toLowerCase();
 
   for (const [key, item] of Object.entries(THAI_PROVINCES)) {
@@ -222,48 +440,59 @@ export async function getThailandWeather(provinceQuery: string, dateString?: str
       queryLower.includes(item.thaiName.toLowerCase()) ||
       queryLower.includes(item.name.toLowerCase())
     ) {
-      matchedKey = key;
-      break;
+      return { key, loc: item };
     }
   }
 
-  // Check if TMD token exists and try TMD API
-  const tmdToken = process.env.TMD_API_TOKEN;
-  if (tmdToken && tmdToken.trim() !== '') {
+  const province = PROVINCE_TRAVEL.find(
+    (p) => queryLower.includes(p.name) || queryLower.includes(p.nameEn.toLowerCase())
+  );
+  if (province) {
+    return {
+      key: province.nameEn,
+      loc: {
+        name: province.nameEn,
+        thaiName: province.name,
+        latitude: province.lat,
+        longitude: province.lon,
+        region: province.region,
+      },
+    };
+  }
+
+  return { key: 'rayong', loc: THAI_PROVINCES.rayong };
+}
+
+/**
+ * Main Weather Service for Thailand:
+ * 1. TMD (กรมอุตุนิยมวิทยา) NWP API when TMD_API_TOKEN is set (point forecast, hourly).
+ * 2. TMD public 7-day province forecast (no registration needed).
+ * 3. Open-Meteo free API if TMD fails.
+ * 4. Thai mock data if the network fails (source: FALLBACK_SYSTEM).
+ */
+export async function getThailandWeather(provinceQuery: string, dateString?: string): Promise<WeatherForecast> {
+  const season = detectThailandSeason(dateString);
+  const { key, loc } = resolveLocation(provinceQuery);
+
+  const tmdToken = process.env.TMD_API_TOKEN?.trim();
+  if (tmdToken && tmdToken !== 'your_tmd_api_token_here') {
     try {
-      const tmdRes = await fetch(
-        `https://data.tmd.go.th/api/WeatherForecastDaily/v2/?uid=api&token=${tmdToken}&format=json`,
-        { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(3500) }
-      );
-      if (tmdRes.ok) {
-        const tmdData = await tmdRes.json();
-        // If TMD data parses successfully, format it
-        if (tmdData && tmdData.daily) {
-          const loc = THAI_PROVINCES[matchedKey];
-          return {
-            province: loc.thaiName,
-            latitude: loc.latitude,
-            longitude: loc.longitude,
-            currentTemp: 30,
-            rainProbability: 40,
-            season,
-            advisory: generateAdvisory(40, 32, loc.thaiName, season),
-            sevenDays: getMockFallbackWeather(matchedKey, season).sevenDays,
-            source: 'TMD_API',
-          };
-        }
-      }
-    } catch (e) {
-      console.warn('TMD API attempt failed, switching to Open-Meteo:', e);
+      return await fetchTmdWeather(loc, season, tmdToken);
+    } catch (err) {
+      console.warn('TMD NWP API failed, switching to TMD 7-day forecast:', err);
     }
   }
 
-  // Fallback to free real-time Open-Meteo API
   try {
-    const loc = THAI_PROVINCES[matchedKey];
-    return await fetchOpenMeteoWeather(matchedKey, loc, season);
+    return await fetchTmd7DayWeather(loc, season);
+  } catch (err) {
+    console.warn('TMD 7-day forecast failed, switching to Open-Meteo:', err);
+  }
+
+  try {
+    return await fetchOpenMeteoWeather(key, loc, season);
   } catch (err) {
     console.warn('Open-Meteo API failed or offline, using fallback Thai weather:', err);
-    return getMockFallbackWeather(matchedKey, season);
+    return getMockFallbackWeather(key, season, loc);
   }
 }

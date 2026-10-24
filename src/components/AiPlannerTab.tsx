@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
   MapPin,
@@ -8,8 +8,6 @@ import {
   Wallet,
   Users,
   Compass,
-  CloudSun,
-  Umbrella,
   Thermometer,
   ExternalLink,
   CheckCircle,
@@ -20,6 +18,7 @@ import {
   Lock,
   ChevronRight,
   Info,
+  SlidersHorizontal,
 } from 'lucide-react';
 import {
   AiTripResponse,
@@ -27,8 +26,22 @@ import {
   TripPlanOption,
   WeatherForecast,
   OtaComparison,
+  PlannerPreset,
+  TripPreferences,
   TIER_CONFIGS,
+  isQuotaExhausted,
 } from '@/lib/types';
+import { PlannerWeatherCard } from '@/components/PlannerWeatherCard';
+import {
+  DEFAULT_PREFERENCES,
+  FOOD_OPTIONS,
+  SUN_OPTIONS,
+  RAIN_OPTIONS,
+  TRANSPORT_OPTIONS,
+  NOTE_EXAMPLES,
+  NOTE_MAX_LENGTH,
+  buildPreferencePrompt,
+} from '@/lib/tripPrompt';
 import { THAI_PROVINCES, detectThailandSeason } from '@/lib/weather';
 
 interface AiPlannerTabProps {
@@ -37,6 +50,9 @@ interface AiPlannerTabProps {
   onQuotaIncrement: () => void;
   onOpenUpgradeModal: () => void;
   onRecordAffiliateClick: (ota: OtaComparison) => void;
+  // Destination + attractions sent from the Thailand map (nonce changes on every send)
+  preset?: PlannerPreset | null;
+  onPresetUsed?: () => void;
 }
 
 const POPULAR_DESTINATIONS = [
@@ -62,13 +78,46 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
   onQuotaIncrement,
   onOpenUpgradeModal,
   onRecordAffiliateClick,
+  preset,
+  onPresetUsed,
 }) => {
   // Form State
-  const [province, setProvince] = useState<string>('เกาะเสม็ด จ.ระยอง');
+  const [province, setProvince] = useState<string>(preset?.province || 'เกาะเสม็ด จ.ระยอง');
+  const [mustVisit, setMustVisit] = useState<string[]>(preset?.mustVisit || []);
+
+  useEffect(() => {
+    if (!preset) return;
+    setProvince(preset.province);
+    setMustVisit(preset.mustVisit);
+    if (preset.totalBudget) setTotalBudget(preset.totalBudget);
+    if (preset.travelersCount) setTravelersCount(preset.travelersCount);
+    if (preset.travelDates) setTravelDates(preset.travelDates);
+    if (preset.travelStyle) setTravelStyle(preset.travelStyle);
+    if (preset.preferences) setPreferences((p) => ({ ...p, ...preset.preferences }));
+    if (preset.autoGenerate) setAutoRunNonce(preset.nonce);
+    onPresetUsed?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preset?.nonce]);
+
+  // Runs on the render after the preset's values are in state, so the request uses them
+  const [autoRunNonce, setAutoRunNonce] = useState<number | null>(null);
+  useEffect(() => {
+    if (autoRunNonce === null) return;
+    setAutoRunNonce(null);
+    handleGeneratePlan();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRunNonce]);
   const [travelDates, setTravelDates] = useState<string>('14 - 16 พ.ย. 2026');
   const [totalBudget, setTotalBudget] = useState<number>(10500);
   const [travelersCount, setTravelersCount] = useState<number>(3);
   const [travelStyle, setTravelStyle] = useState<string>('สายคาเฟ่');
+  const [preferences, setPreferences] = useState<TripPreferences>(DEFAULT_PREFERENCES);
+  // Counts can't exceed the group size if travellers is lowered afterwards
+  const clampedPreferences: TripPreferences = {
+    ...preferences,
+    elderlyCount: Math.min(preferences.elderlyCount, travelersCount),
+    disabledCount: Math.min(preferences.disabledCount, travelersCount),
+  };
 
   // Generation & Results State
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -86,7 +135,7 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
     setErrorMsg(null);
 
     // Check Quota
-    if (aiQuotaUsed >= tierConfig.maxQuotas) {
+    if (isQuotaExhausted(currentTier, aiQuotaUsed)) {
       onOpenUpgradeModal();
       return;
     }
@@ -105,6 +154,8 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
           travelStyle,
           tier: currentTier,
           currentQuotaUsed: aiQuotaUsed,
+          mustVisit,
+          preferences: clampedPreferences,
         }),
       });
 
@@ -197,6 +248,36 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
                 </button>
               ))}
             </div>
+
+            {/* Attractions picked on the Thailand map */}
+            {mustVisit.length > 0 && (
+              <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
+                <div className="flex items-center justify-between text-xs font-bold text-emerald-800">
+                  <span>📍 สถานที่ที่อยากไป (AI จะจัดลงในแผนให้)</span>
+                  <button type="button" onClick={() => setMustVisit([])} className="font-medium text-emerald-700 hover:underline">
+                    ล้างทั้งหมด
+                  </button>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {mustVisit.map((place) => (
+                    <span
+                      key={place}
+                      className="inline-flex items-center gap-1 rounded-lg bg-white border border-emerald-200 px-2 py-1 text-xs font-medium text-slate-700"
+                    >
+                      {place}
+                      <button
+                        type="button"
+                        onClick={() => setMustVisit((prev) => prev.filter((p) => p !== place))}
+                        className="text-slate-400 hover:text-rose-600"
+                        aria-label={`เอา ${place} ออก`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Grid: Dates & Travelers & Season Detection */}
@@ -250,9 +331,18 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
                 />
                 <span className="text-sm font-medium text-slate-500 shrink-0">คน</span>
               </div>
-              <p className="text-xs text-slate-400 mt-2">
-                งบเฉลี่ย: <strong className="text-emerald-700 font-mono">฿{perPersonBudget.toLocaleString()}</strong> / คน
-              </p>
+              <label className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                <span className="shrink-0">งบต่อคน ฿</span>
+                <input
+                  type="number"
+                  step="100"
+                  min="500"
+                  value={perPersonBudget}
+                  onChange={(e) => setTotalBudget(Math.max(500, parseInt(e.target.value) || 500) * Math.max(1, travelersCount))}
+                  className="w-full h-8 px-2.5 rounded-lg border border-slate-300 font-mono font-bold text-emerald-700 outline-none focus:ring-2 focus:ring-emerald-500"
+                  aria-label="งบต่อคน (บาท)"
+                />
+              </label>
             </div>
 
             {/* Total Budget */}
@@ -315,6 +405,165 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
             </div>
           </div>
 
+          {/* Group needs -> detailed AI prompt */}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5 space-y-5">
+            <div>
+              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                <SlidersHorizontal className="w-4 h-4 text-emerald-600" /> ความต้องการเฉพาะของกลุ่ม
+              </h3>
+              <p className="text-xs text-slate-500">ระบบจะแปลงเป็นคำสั่งเชิงลึกส่งให้ AI อัตโนมัติ</p>
+            </div>
+
+            {/* Food */}
+            <div>
+              <div className="text-xs font-bold text-slate-700 mb-2">สไตล์การกิน (เลือกได้หลายข้อ)</div>
+              <div className="flex flex-wrap gap-1.5">
+                {FOOD_OPTIONS.map((o) => {
+                  const on = preferences.foodStyles.includes(o.id);
+                  return (
+                    <button
+                      key={o.id}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() =>
+                        setPreferences((p) => ({
+                          ...p,
+                          foodStyles: on ? p.foodStyles.filter((f) => f !== o.id) : [...p.foodStyles, o.id],
+                        }))
+                      }
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                        on
+                          ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
+                          : 'bg-white border-slate-200 text-slate-600 hover:border-emerald-300'
+                      }`}
+                    >
+                      {o.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Sun / rain */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {(
+                [
+                  { key: 'sunTolerance', title: 'ความทนต่อแดด', options: SUN_OPTIONS },
+                  { key: 'rainTolerance', title: 'ความทนต่อฝน', options: RAIN_OPTIONS },
+                ] as const
+              ).map(({ key, title, options }) => (
+                <div key={key}>
+                  <div className="text-xs font-bold text-slate-700 mb-2">{title}</div>
+                  <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-slate-200/70" role="group" aria-label={title}>
+                    {options.map((o) => (
+                      <button
+                        key={o.id}
+                        type="button"
+                        aria-pressed={preferences[key] === o.id}
+                        onClick={() => setPreferences((p) => ({ ...p, [key]: o.id }))}
+                        className={`h-9 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${
+                          preferences[key] === o.id ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        {o.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Elderly / disabled: typed count + free-text details */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {(
+                [
+                  { countKey: 'elderlyCount', noteKey: 'elderlyNote', title: '👵 ผู้สูงอายุในกลุ่ม', example: NOTE_EXAMPLES.elderly },
+                  { countKey: 'disabledCount', noteKey: 'disabledNote', title: '♿ ผู้พิการ / ใช้วีลแชร์', example: NOTE_EXAMPLES.disabled },
+                ] as const
+              ).map(({ countKey, noteKey, title, example }) => {
+                const value = Math.min(preferences[countKey], travelersCount);
+                return (
+                  <div key={countKey}>
+                    <label className="block text-xs font-bold text-slate-700 mb-2" htmlFor={`pref-${countKey}`}>
+                      {title}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        id={`pref-${countKey}`}
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={travelersCount}
+                        value={value || ''}
+                        placeholder="เช่น 1"
+                        onChange={(e) =>
+                          setPreferences((p) => ({
+                            ...p,
+                            [countKey]: Math.min(travelersCount, Math.max(0, parseInt(e.target.value) || 0)),
+                          }))
+                        }
+                        className="w-24 h-11 px-3 rounded-xl border border-slate-300 bg-white text-sm font-bold text-slate-900 font-mono outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                      <span className="text-xs text-slate-500">คน (จาก {travelersCount} คน)</span>
+                    </div>
+                    <textarea
+                      value={preferences[noteKey]}
+                      onChange={(e) => setPreferences((p) => ({ ...p, [noteKey]: e.target.value.slice(0, NOTE_MAX_LENGTH) }))}
+                      placeholder={example}
+                      rows={2}
+                      maxLength={NOTE_MAX_LENGTH}
+                      aria-label={`รายละเอียด${title}`}
+                      className="mt-2 w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm text-slate-900 outline-none focus:ring-2 focus:ring-emerald-500 resize-none placeholder:text-slate-400"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Transport: pick a type, then describe the vehicle */}
+            <div>
+              <div className="text-xs font-bold text-slate-700 mb-2">ประเภทรถที่ใช้</div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {TRANSPORT_OPTIONS.map((o) => {
+                  const on = preferences.transport === o.id;
+                  return (
+                    <button
+                      key={o.id}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setPreferences((p) => ({ ...p, transport: o.id }))}
+                      className={`text-left p-3 rounded-xl border-2 transition-all ${
+                        on ? 'border-emerald-600 bg-emerald-50/60 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="text-sm font-bold text-slate-900">{o.label}</div>
+                      <div className="text-[11px] text-slate-500">{o.desc}</div>
+                    </button>
+                  );
+                })}
+              </div>
+              <input
+                value={preferences.transportNote}
+                onChange={(e) => setPreferences((p) => ({ ...p, transportNote: e.target.value.slice(0, NOTE_MAX_LENGTH) }))}
+                placeholder={NOTE_EXAMPLES.transport[preferences.transport]}
+                maxLength={NOTE_MAX_LENGTH}
+                aria-label="รายละเอียดการเดินทาง"
+                className="mt-2 w-full h-11 px-3 rounded-xl border border-slate-300 bg-white text-sm text-slate-900 outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-400"
+              />
+            </div>
+
+            {/* Prompt preview: exactly what the server appends */}
+            <details className="group rounded-xl border border-slate-200 bg-white">
+              <summary className="cursor-pointer list-none px-3 py-2.5 text-xs font-bold text-slate-600 flex items-center justify-between">
+                <span>🧠 ดู Prompt เชิงลึกที่จะส่งให้ AI</span>
+                <span className="text-slate-400 transition-transform group-open:rotate-180">▾</span>
+              </summary>
+              <pre className="px-3 pb-3 text-[11px] leading-relaxed text-slate-600 whitespace-pre-wrap font-sans">
+                {buildPreferencePrompt(clampedPreferences, travelersCount, perPersonBudget)}
+              </pre>
+            </details>
+          </div>
+
           {/* Error Message Alert */}
           {errorMsg && (
             <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-start space-x-2">
@@ -361,85 +610,8 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
       {tripData && (
         <div className="space-y-8 animate-fadeIn">
           
-          {/* WEATHER ADVISORY CARD (TMD / Open-Meteo) */}
-          <div className="bg-gradient-to-br from-sky-900 via-indigo-900 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-sky-800/60 relative overflow-hidden">
-            <div className="relative z-10">
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-sky-700/50">
-                <div className="flex items-center space-x-2">
-                  <CloudSun className="w-6 h-6 text-amber-400" />
-                  <h3 className="text-lg sm:text-xl font-bold">
-                    สภาพอากาศเรียลไทม์: {tripData.province}
-                  </h3>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs px-2.5 py-1 rounded-full bg-sky-500/20 text-sky-200 border border-sky-400/30">
-                    Source: {tripData.weather.source === 'TMD_API' ? 'กรมอุตุนิยมวิทยา (TMD API)' : 'Open-Meteo Realtime'}
-                  </span>
-                  <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-200 border border-amber-400/30 font-semibold">
-                    {tripData.season} SEASON
-                  </span>
-                </div>
-              </div>
-
-              {/* Current Metrics */}
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                <div className="flex items-center space-x-4">
-                  <div className="text-4xl sm:text-5xl font-extrabold font-mono text-amber-300">
-                    {tripData.weather.currentTemp}°C
-                  </div>
-                  <div>
-                    <div className="text-xs text-slate-300">อุณหภูมิปัจจุบัน</div>
-                    <div className="text-sm font-semibold text-white">อากาศดี เหมาะแก่การเดินทาง</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-sky-300">
-                    <Umbrella className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <div className="text-xs text-slate-300">โอกาสฝนตกเฉลี่ย</div>
-                    <div className="text-lg font-bold font-mono text-sky-300">
-                      {tripData.weather.rainProbability}%
-                    </div>
-                  </div>
-                </div>
-
-                {/* AI Advisory Box */}
-                <div className="md:col-span-1 p-3.5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/15 text-xs sm:text-sm text-slate-200 leading-relaxed">
-                  <div className="flex items-center space-x-1.5 font-bold text-amber-300 mb-1">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>คำแนะนำ AI จากสภาพอากาศ:</span>
-                  </div>
-                  {tripData.weather.advisory}
-                </div>
-              </div>
-
-              {/* 7-Day Mini Weather Strip */}
-              <div className="mt-6 pt-4 border-t border-sky-800/60">
-                <div className="text-xs text-sky-200 font-semibold mb-3">พยากรณ์อากาศล่วงหน้า 7 วัน:</div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
-                  {tripData.weather.sevenDays.map((day, idx) => (
-                    <div
-                      key={idx}
-                      className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-center hover:bg-white/10 transition-all"
-                    >
-                      <div className="text-xs text-slate-400 font-medium">
-                        {new Date(day.date).toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric' })}
-                      </div>
-                      <div className="text-xl my-1">{day.icon}</div>
-                      <div className="text-xs font-mono font-bold text-white">
-                        {day.tempMin}° - {day.tempMax}°
-                      </div>
-                      <div className="text-[11px] text-sky-300 mt-0.5">
-                        ฝน {day.rainProbability}%
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* WEATHER CARD (TMD / Open-Meteo) with animated scene */}
+          <PlannerWeatherCard province={tripData.province} season={tripData.season} weather={tripData.weather} />
 
           {/* PLAN OPTIONS SELECTOR (1, 3, or 5 based on Tier) */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">

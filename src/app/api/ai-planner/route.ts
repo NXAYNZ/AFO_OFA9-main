@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateAiTripPlan } from '@/lib/gemini';
 import { getThailandWeather } from '@/lib/weather';
-import { TIER_CONFIGS, SubscriptionTier } from '@/lib/types';
+import { TIER_CONFIGS, SubscriptionTier, isQuotaExhausted } from '@/lib/types';
+import { sanitizePreferences } from '@/lib/tripPrompt';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,13 +15,21 @@ export async function POST(req: NextRequest) {
       travelStyle = 'สายคาเฟ่',
       tier = 'FREE',
       currentQuotaUsed = 0,
+      mustVisit = [],
+      preferences,
     } = body;
+    const safePreferences = sanitizePreferences(preferences, Math.max(1, Number(travelersCount) || 1));
+
+    // Attractions picked on the map: plain strings only, capped to keep the prompt small
+    const mustVisitList: string[] = Array.isArray(mustVisit)
+      ? mustVisit.filter((s: unknown): s is string => typeof s === 'string').map((s) => s.slice(0, 80)).slice(0, 15)
+      : [];
 
     const validatedTier = (tier in TIER_CONFIGS ? tier : 'FREE') as SubscriptionTier;
     const tierConfig = TIER_CONFIGS[validatedTier];
 
     // Check Quota Paywall ("Make Me Money" Stream #1)
-    if (currentQuotaUsed >= tierConfig.maxQuotas) {
+    if (isQuotaExhausted(validatedTier, currentQuotaUsed)) {
       return NextResponse.json(
         {
           success: false,
@@ -45,10 +54,13 @@ export async function POST(req: NextRequest) {
       travelStyle,
       tier: validatedTier,
       weather,
+      mustVisit: mustVisitList,
+      preferences: safePreferences,
     });
 
     const newQuotaUsed = currentQuotaUsed + 1;
-    const remainingQuota = Math.max(0, tierConfig.maxQuotas - newQuotaUsed);
+    // null = unlimited (Platinum)
+    const remainingQuota = tierConfig.unlimitedQuota ? null : Math.max(0, tierConfig.maxQuotas - newQuotaUsed);
 
     return NextResponse.json({
       success: true,
@@ -67,7 +79,8 @@ export async function POST(req: NextRequest) {
       tierUsed: validatedTier,
       quotaUsed: newQuotaUsed,
       remainingQuota,
-      maxQuotas: tierConfig.maxQuotas,
+      maxQuotas: tierConfig.unlimitedQuota ? null : tierConfig.maxQuotas,
+      unlimitedQuota: tierConfig.unlimitedQuota,
     });
   } catch (error: any) {
     console.error('AI Planner route error:', error);

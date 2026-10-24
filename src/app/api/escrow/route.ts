@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { EscrowTransaction, SubscriptionTier, TIER_CONFIGS } from '@/lib/types';
+import { EscrowTransaction, SubscriptionTier, TIER_CONFIGS, quotaLabel } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
   try {
@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
           type: 'SUBSCRIPTION_UPGRADE',
           amount: tierConfig.priceMonthly,
           platformRevenue: tierConfig.priceMonthly,
-          description: `อัปเกรดสมาชิกเป็น ${tierConfig.labelThai} (โควตา AI ${tierConfig.maxQuotas} ครั้ง/เดือน)`,
+          description: `อัปเกรดสมาชิกเป็น ${tierConfig.labelThai} (โควตา AI ${quotaLabel(tierConfig.name)})`,
           timestamp: 'เพิ่งเกิดขึ้น',
         };
 

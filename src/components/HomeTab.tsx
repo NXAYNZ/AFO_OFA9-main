@@ -20,7 +20,8 @@ import {
   Crown,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { CommunityTrip, UserProfile, SubscriptionTier, TIER_CONFIGS } from '@/lib/types';
+import { TravelSearchTabs } from '@/components/TravelSearchTabs';
+import { CommunityTrip, UserProfile, SubscriptionTier, TIER_CONFIGS, PlannerPresetOptions } from '@/lib/types';
 
 interface HomeTabProps {
   // Signed-in member's profile; null when signed out or not created yet
@@ -31,6 +32,8 @@ interface HomeTabProps {
   currentTier: SubscriptionTier;
   aiQuotaUsed: number;
   onNavigate: (tab: string) => void;
+  // Send a destination to the AI planner (same handler the map uses)
+  onPlanTrip: (province: string, places: string[], totalBudget: number | undefined, people: number, options: PlannerPresetOptions) => void;
   onSignIn: () => void;
   onOpenProfile: () => void;
   onOpenUpgradeModal: () => void;
@@ -93,6 +96,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
   currentTier,
   aiQuotaUsed,
   onNavigate,
+  onPlanTrip,
   onSignIn,
   onOpenProfile,
   onOpenUpgradeModal,
@@ -193,6 +197,9 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       <section className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-6 animate-fadeIn">
         {renderWelcome()}
       </section>
+
+      {/* Booking-style search tabs */}
+      <TravelSearchTabs onNavigate={onNavigate} onPlanTrip={onPlanTrip} />
 
       {/* Quick actions */}
       <section>
@@ -315,7 +322,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
         <div className="flex-1 text-sm">
           <div className="font-bold text-slate-900">สมาชิก {tierConfig.labelThai}</div>
           <div className="text-slate-600">
-            ใช้โควตา AI ไปแล้ว {aiQuotaUsed} / {tierConfig.maxQuotas} ครั้งเดือนนี้ • ส่วนลดค่าเปิดทริป{' '}
+            {tierConfig.unlimitedQuota ? 'ใช้ AI วางแผนได้ไม่จำกัด' : `ใช้โควตา AI ไปแล้ว ${aiQuotaUsed} / ${tierConfig.maxQuotas} ครั้งเดือนนี้`} • ส่วนลดค่าเปิดทริป{' '}
             {tierConfig.creationFeeDiscountPercent}%
           </div>
         </div>

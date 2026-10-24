@@ -18,11 +18,15 @@ import {
   PlusCircle,
   BadgeCheck,
   CornerDownLeft,
+  Map as MapIcon,
   LogIn,
   LogOut,
   UserPen,
   ChevronDown,
   Home,
+  Sun,
+  Moon,
+  Settings,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { SubscriptionTier, TIER_CONFIGS } from '@/lib/types';
@@ -37,6 +41,7 @@ interface SearchItem {
 }
 
 const SEARCH_ITEMS: SearchItem[] = [
+  { label: 'แผนที่เที่ยวไทย 77 จังหวัด', description: 'ดูแหล่งท่องเที่ยวทั่วประเทศ แล้วสร้างทริป', icon: MapIcon, tab: 'thailand-map', keywords: 'แผนที่ map จังหวัด ภาค เหนือ อีสาน ใต้ ตะวันออก ภาคกลาง ที่เที่ยว แหล่งท่องเที่ยว ดอย ภู เกาะ น้ำตก วัด' },
   { label: 'หน้าหลัก', description: 'ภาพรวม ทริปแนะนำ และโปรไฟล์ของคุณ', icon: Home, tab: 'home', keywords: 'home หน้าหลัก หน้าแรก โปรไฟล์ ภาพรวม' },
   { label: 'AI Planner & OTA', description: 'ให้ AI จัดทริปตามงบ', icon: Sparkles, tab: 'ai-planner', keywords: 'ai planner วางแผน ทริป เที่ยว งบ gemini แผนเที่ยว' },
   { label: 'เทียบราคาโรงแรม', description: 'Agoda vs Trip.com', icon: Hotel, tab: 'ai-planner', keywords: 'โรงแรม ที่พัก hotel agoda trip.com ราคา ota เทียบ' },
@@ -346,6 +351,9 @@ interface NavbarProps {
   onSignIn: () => void;
   onEditProfile: () => void;
   onSignOut: () => void;
+  isDark: boolean;
+  onToggleTheme: () => void;
+  onOpenSettings: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -359,10 +367,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSignIn,
   onEditProfile,
   onSignOut,
+  isDark,
+  onToggleTheme,
+  onOpenSettings,
 }) => {
   const tierConfig = TIER_CONFIGS[currentTier];
+  const unlimited = tierConfig.unlimitedQuota;
   const quotaRemaining = Math.max(0, tierConfig.maxQuotas - aiQuotaUsed);
-  const quotaPercent = Math.min(100, Math.round((aiQuotaUsed / tierConfig.maxQuotas) * 100));
+  // Unlimited shows an empty (never filling) bar
+  const quotaPercent = unlimited ? 0 : Math.min(100, Math.round((aiQuotaUsed / tierConfig.maxQuotas) * 100));
 
   return (
     <header className="sticky top-0 z-50 bg-white/85 backdrop-blur-lg border-b border-slate-200/80 shadow-sm">
@@ -390,7 +403,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-emerald-700 via-teal-700 to-indigo-700 bg-clip-text text-transparent whitespace-nowrap">
+                  <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-emerald-700 via-teal-700 to-indigo-700 dark:from-emerald-400 dark:via-teal-300 dark:to-indigo-300 bg-clip-text text-transparent whitespace-nowrap">
                     TripSure AI
                   </span>
                   <span className="hidden sm:inline text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 whitespace-nowrap transition-colors group-hover:bg-emerald-200">
@@ -443,8 +456,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 whitespace-nowrap">
                   <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
                   <span>โควตา AI</span>
-                  <span className={`font-mono font-bold ${quotaRemaining === 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                    {quotaRemaining}/{tierConfig.maxQuotas}
+                  <span className={`font-mono font-bold ${!unlimited && quotaRemaining === 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                    {unlimited ? '∞ ไม่จำกัด' : `${quotaRemaining}/${tierConfig.maxQuotas}`}
                   </span>
                 </div>
                 {/* Micro progress bar */}
@@ -471,6 +484,30 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <Crown className="w-3.5 h-3.5 group-hover-wiggle" />
                 <span>อัปเกรด</span>
                 <ArrowUpRight className="w-3 h-3 hidden sm:inline transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </button>
+            </div>
+
+            {/* Theme quick toggle + settings */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={onToggleTheme}
+                className="group w-10 h-10 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 flex items-center justify-center transition-all active:scale-90"
+                aria-label={isDark ? 'เปลี่ยนเป็นโหมดสว่าง' : 'เปลี่ยนเป็นโหมดมืด'}
+                title={isDark ? 'โหมดสว่าง' : 'โหมดมืด'}
+              >
+                {isDark ? (
+                  <Sun className="w-5 h-5 text-amber-400 transition-transform duration-500 group-hover:rotate-90" />
+                ) : (
+                  <Moon className="w-5 h-5 transition-transform duration-500 group-hover:-rotate-12" />
+                )}
+              </button>
+              <button
+                onClick={onOpenSettings}
+                className="group hidden sm:flex w-10 h-10 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 items-center justify-center transition-all active:scale-90"
+                aria-label="ตั้งค่า"
+                title="ตั้งค่า"
+              >
+                <Settings className="w-5 h-5 transition-transform duration-500 group-hover:rotate-90" />
               </button>
             </div>
 

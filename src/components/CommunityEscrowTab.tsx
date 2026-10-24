@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ShieldCheck,
   Users,
@@ -22,8 +22,10 @@ import {
   UserProfile,
   TripParticipant,
   SubscriptionTier,
-  TIER_CONFIGS,
 } from '@/lib/types';
+import { CreateTripWindow, TripSeed } from '@/components/CreateTripWindow';
+
+const DEFAULT_SEED: TripSeed = { title: '', destination: 'เกาะล้าน จ.ชลบุรี', places: [] };
 
 export type JoinTripResult = 'JOINED' | 'NEEDS_PROFILE' | 'ALREADY_JOINED' | 'FULL';
 
@@ -37,6 +39,9 @@ interface CommunityEscrowTabProps {
   userProfile: UserProfile;
   // Signed-in member's own profile; null until they create one on the web
   memberProfile: UserProfile | null;
+  // Trip draft sent from the Thailand map: opens the create modal prefilled (nonce changes on every send)
+  draft?: { title: string; destination: string; places: string[]; nonce: number } | null;
+  onDraftUsed?: () => void;
 }
 
 export const CommunityEscrowTab: React.FC<CommunityEscrowTabProps> = ({
@@ -48,6 +53,8 @@ export const CommunityEscrowTab: React.FC<CommunityEscrowTabProps> = ({
   allTrips,
   userProfile,
   memberProfile,
+  draft,
+  onDraftUsed,
 }) => {
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [flakeSuccessMsg, setFlakeSuccessMsg] = useState<string | null>(null);
@@ -59,19 +66,20 @@ export const CommunityEscrowTab: React.FC<CommunityEscrowTabProps> = ({
     if (e.animationName === 'shake-x') setShakingTripId(null);
   };
 
-  // New trip modal form
-  const [newTitle, setNewTitle] = useState('');
-  const [newDestination, setNewDestination] = useState('เกาะล้าน จ.ชลบุรี');
-  const [newDates, setNewDates] = useState('28 - 29 พ.ย. 2026');
-  const [newSlots, setNewSlots] = useState(6);
-  const [newCost, setNewCost] = useState(2500);
-  const [newDeposit, setNewDeposit] = useState(1000);
+  // Starting values for the create-trip window (a new object resets its form)
+  const [tripSeed, setTripSeed] = useState<TripSeed>(DEFAULT_SEED);
+  const openCreate = (seed: TripSeed = DEFAULT_SEED) => {
+    setTripSeed({ ...seed });
+    setShowCreateModal(true);
+  };
 
-  const tierConfig = TIER_CONFIGS[currentTier];
-  const totalTargetPool = newSlots * newCost;
-  const baseCreationFee = Math.round(totalTargetPool * 0.035);
-  const discountRate = tierConfig.creationFeeDiscountPercent / 100;
-  const finalCreationFee = Math.round(baseCreationFee * (1 - discountRate));
+  useEffect(() => {
+    if (!draft) return;
+    openCreate({ title: draft.title, destination: draft.destination, places: draft.places });
+    onDraftUsed?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft?.nonce]);
+
 
   // The participant to simulate flake on (default Krit who has flaked before or another member)
   const flakyParticipant = heroTrip.participants.find(
@@ -105,25 +113,10 @@ export const CommunityEscrowTab: React.FC<CommunityEscrowTabProps> = ({
     setTimeout(() => setFlakeSuccessMsg(null), 8000);
   };
 
-  const handleCreateSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onCreateNewTrip({
-      title: newTitle || `ทริปพาเที่ยว ${newDestination}`,
-      destination: newDestination,
-      travelDates: newDates,
-      totalSlots: newSlots,
-      joinedSlots: 1,
-      costPerPerson: newCost,
-      securityDepositPerPerson: newDeposit,
-      highlights: [
-        '🛡️ สัญญา Smart Escrow ค้ำประกันมัดจำ 100%',
-        '🚐 ค่าใช้จ่ายหารเฉลี่ยเท่ากัน โปร่งใส',
-        '📸 มีตากล้องและเพื่อนร่วมทริปคุณภาพ',
-      ],
-      imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
-    });
+  const handleCreateTrip = (trip: Partial<CommunityTrip>, finalFee: number) => {
+    onCreateNewTrip(trip);
     setShowCreateModal(false);
-    setJoinSuccessMsg(`✨ เปิดทริป "${newTitle}" สำเร็จ! บันทึกค่าธรรมเนียมคุ้มครอง ${finalCreationFee.toLocaleString()} บาท เข้าสู่ระบบ`);
+    setJoinSuccessMsg(`✨ เปิดทริป "${trip.title}" สำเร็จ! บันทึกค่าธรรมเนียมคุ้มครอง ${finalFee.toLocaleString()} บาท เข้าสู่ระบบ`);
     setTimeout(() => setJoinSuccessMsg(null), 5000);
   };
 
@@ -147,7 +140,7 @@ export const CommunityEscrowTab: React.FC<CommunityEscrowTabProps> = ({
         </div>
 
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => openCreate()}
           className="self-start sm:self-center px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md shadow-indigo-600/20 flex items-center space-x-2 transition-all transform hover:-translate-y-0.5"
         >
           <PlusCircle className="w-4 h-4" />
@@ -491,134 +484,79 @@ export const CommunityEscrowTab: React.FC<CommunityEscrowTabProps> = ({
         </div>
       </div>
 
-      {/* CREATE NEW TRIP MODAL */}
-      {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-200 relative">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div className="flex items-center space-x-2">
-                <span className="p-2 rounded-xl bg-indigo-100 text-indigo-700">
-                  <PlusCircle className="w-5 h-5" />
-                </span>
-                <h3 className="text-lg font-bold text-slate-900">สร้างทริปชุมชนใหม่ (Smart Escrow)</h3>
-              </div>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-xl font-bold"
-              >
-                ✕
-              </button>
+      {/* BOTTOM CTA: start a new trip */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 text-white p-6 sm:p-8 shadow-xl">
+        <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-20 -left-10 w-48 h-48 rounded-full bg-fuchsia-300/20 blur-2xl pointer-events-none" />
+        <div className="relative grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-6 items-center">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-white/15 border border-white/25">
+              <ShieldCheck className="w-3.5 h-3.5" /> คุ้มครองด้วย Smart Escrow
+            </div>
+            <h3 className="mt-3 text-2xl sm:text-3xl font-black leading-tight">เริ่มสร้างทริปใหม่ของคุณ</h3>
+            <p className="mt-1.5 text-sm text-white/85 max-w-xl">
+              ชวนเพื่อนไปเที่ยวโดยไม่ต้องกลัวโดนเท ทุกคนล็อกมัดจำไว้ในระบบ ใครเทโดนหักชดเชยให้เพื่อนในกลุ่ม
+            </p>
+
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              {[
+                { icon: <PlusCircle className="w-4 h-4" />, title: '1. สร้างทริป', desc: 'ตั้งปลายทาง วันเดินทาง และงบต่อคน' },
+                { icon: <Users className="w-4 h-4" />, title: '2. เพื่อนล็อกมัดจำ', desc: 'เงินพักไว้ใน Escrow จนกว่าจะออกเดินทาง' },
+                { icon: <Award className="w-4 h-4" />, title: '3. เที่ยวจริง ได้เงินคืน', desc: 'มาตามนัดรับเงินคืนเต็ม พร้อมคะแนนความน่าเชื่อถือ' },
+              ].map((step) => (
+                <div key={step.title} className="rounded-2xl bg-white/10 border border-white/15 p-3 backdrop-blur-sm">
+                  <div className="font-bold text-sm flex items-center gap-1.5">
+                    {step.icon} {step.title}
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-white/75 leading-snug">{step.desc}</div>
+                </div>
+              ))}
             </div>
 
-            <form onSubmit={handleCreateSubmit} className="mt-5 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">ชื่อทริป</label>
-                <input
-                  type="text"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="เช่น ทริปดำน้ำเกาะล้าน 2 วัน 1 คืน นอนวิลล่า"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">จุดหมายปลายทาง</label>
-                  <input
-                    type="text"
-                    value={newDestination}
-                    onChange={(e) => setNewDestination(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">วันเดินทาง</label>
-                  <input
-                    type="text"
-                    value={newDates}
-                    onChange={(e) => setNewDates(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">จำนวนคน</label>
-                  <input
-                    type="number"
-                    min="2"
-                    max="20"
-                    value={newSlots}
-                    onChange={(e) => setNewSlots(parseInt(e.target.value) || 2)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-semibold outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">ค่าทริป/คน</label>
-                  <input
-                    type="number"
-                    step="500"
-                    value={newCost}
-                    onChange={(e) => setNewCost(parseInt(e.target.value) || 1000)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-semibold outline-none font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">มัดจำ Escrow</label>
-                  <input
-                    type="number"
-                    step="200"
-                    value={newDeposit}
-                    onChange={(e) => setNewDeposit(parseInt(e.target.value) || 500)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-semibold outline-none font-mono"
-                  />
-                </div>
-              </div>
-
-              {/* 3.5% Platform Fee Breakdown Box */}
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                <div className="flex justify-between text-slate-600">
-                  <span>เป้าหมายงบรวมทริป:</span>
-                  <span className="font-mono font-bold">฿{totalTargetPool.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-slate-600 mt-1">
-                  <span>ค่าธรรมเนียมคุ้มครองระบบ (3.5%):</span>
-                  <span className="font-mono font-bold">฿{baseCreationFee.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-emerald-600 mt-1">
-                  <span>ส่วนลดจากระดับ {currentTier} ({tierConfig.creationFeeDiscountPercent}%):</span>
-                  <span className="font-mono font-bold">-฿{Math.round(baseCreationFee * discountRate).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-slate-900 font-extrabold pt-2 mt-2 border-t border-slate-200 text-sm">
-                  <span>ค่าธรรมเนียมสุทธิที่ชำระ:</span>
-                  <span className="font-mono text-indigo-700">฿{finalCreationFee.toLocaleString()} บาท</span>
-                </div>
-              </div>
-
-              <div className="pt-2 flex justify-end space-x-2">
+            <div className="mt-4 flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] text-white/70 mr-1">ไอเดียเริ่มต้น:</span>
+              {[
+                { title: 'เชียงใหม่ ทะเลหมอก 3 วัน 2 คืน', destination: 'เชียงใหม่' },
+                { title: 'เกาะเสม็ด ชิลล์ริมทะเล', destination: 'เกาะเสม็ด จ.ระยอง' },
+                { title: 'น่าน ดูดาว ปั่นจักรยานเมืองเก่า', destination: 'น่าน' },
+              ].map((idea) => (
                 <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-semibold text-xs hover:bg-slate-50"
+                  key={idea.title}
+                  onClick={() => {
+                    openCreate({ title: idea.title, destination: idea.destination, places: [] });
+                  }}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/15 hover:bg-white/30 border border-white/20 transition-colors"
                 >
-                  ยกเลิก
+                  {idea.title}
                 </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md"
-                >
-                  เปิดทริปและชำระค่าธรรมเนียม
-                </button>
-              </div>
-            </form>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col items-stretch lg:items-center gap-2">
+            <button
+              onClick={() => openCreate()}
+              className="btn-shine px-7 h-14 rounded-2xl bg-white text-indigo-700 font-black text-base shadow-lg shadow-indigo-900/30 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 active:scale-[0.98]"
+            >
+              <PlusCircle className="w-5 h-5" />
+              สร้างทริปใหม่เลย
+              <ArrowRight className="w-5 h-5" />
+            </button>
+            <span className="text-[11px] text-white/75 text-center">ค่าธรรมเนียมแพลตฟอร์ม 3.5% • สมาชิก Gold/Platinum ได้ส่วนลด</span>
           </div>
         </div>
-      )}
+      </div>
+
+      {/* CREATE NEW TRIP: full-screen window */}
+      <CreateTripWindow
+        isOpen={showCreateModal}
+        seed={tripSeed}
+        host={memberProfile ?? userProfile}
+        isMember={Boolean(memberProfile)}
+        currentTier={currentTier}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateTrip}
+      />
 
     </div>
   );

@@ -4,7 +4,9 @@ import {
   OtaComparison,
   SubscriptionTier,
   WeatherForecast,
+  TripPreferences,
 } from './types';
+import { buildPreferencePrompt, preferenceNotes, transportLabel } from './tripPrompt';
 import { SAMPLE_KOH_SAMET_PLANS, SAMPLE_OTA_COMPARISONS } from './mockData';
 
 export interface GenerateTripPlanParams {
@@ -15,6 +17,8 @@ export interface GenerateTripPlanParams {
   travelStyle: string; // e.g., 'สายคาเฟ่', 'สายลุยธรรมชาติ', 'สายปาร์ตี้', 'สายประหยัด'
   tier: SubscriptionTier;
   weather: WeatherForecast;
+  mustVisit?: string[]; // attractions picked on the Thailand map
+  preferences?: TripPreferences;
 }
 
 export interface GeneratedTripResult {
@@ -28,7 +32,8 @@ export interface GeneratedTripResult {
  * Fallback generator for instant, ultra-realistic Thai trip plans without waiting for API keys
  */
 function generateThaiFallbackPlans(params: GenerateTripPlanParams): GeneratedTripResult {
-  const { province, totalBudget, travelersCount, travelStyle, tier, weather } = params;
+  const { province, totalBudget, travelersCount, travelStyle, tier, weather, mustVisit = [], preferences } = params;
+  const prefNotes = preferences ? preferenceNotes(preferences) : [];
   const costPerPerson = Math.round(totalBudget / Math.max(1, travelersCount));
 
   // Determine how many plans to return based on Tier:
@@ -55,9 +60,13 @@ function generateThaiFallbackPlans(params: GenerateTripPlanParams): GeneratedTri
         title,
         tagline: `ปรับแต่งตามสไตล์ "${travelStyle}" สำหรับ ${travelersCount} ท่าน งบประมาณรวม ${totalBudget.toLocaleString()} บาท`,
         targetVibe: travelStyle,
-        totalEstimatedCost: calculatedCost,
-        estimatedSavings: Math.round(calculatedCost * 0.18),
+        ...(preferences ? { recommendedTransport: transportLabel(preferences.transport) } : {}),
+        // Respect the per-person budget cap
+        totalEstimatedCost: Math.min(calculatedCost, costPerPerson),
+        estimatedSavings: Math.round(Math.min(calculatedCost, costPerPerson) * 0.18),
         savingsTips: [
+          ...(mustVisit.length > 0 ? [`📍 จุดที่คุณเลือกจากแผนที่: ${mustVisit.join(', ')}`] : []),
+          ...prefNotes,
           ...basePlan.savingsTips,
           `ช่วงเดินทางตรวจพบว่าเป็นช่วง ${weather.season} Season: แนะนำจองตั๋วและที่พักล่วงหน้าผ่าน OTA เพื่อรับส่วนลด 15-25%`,
           `คำแนะนำสภาพอากาศ: ${weather.advisory}`,
@@ -142,12 +151,25 @@ export async function generateAiTripPlan(
 ข้อมูลความต้องการจากผู้ใช้:
 - จังหวัดปลายทาง: ${params.province}
 - วันที่เดินทาง: ${params.travelDates}
-- สภาพอากาศและฤดูกาล: ${params.weather.season} Season (อุณหภูมิ ${params.weather.currentTemp}°C, โอกาสฝน ${params.weather.rainProbability}%, คำแนะนำ: ${params.weather.advisory})
+- สภาพอากาศและฤดูกาล: ${params.weather.season} Season (อุณหภูมิ ${params.weather.currentTemp}°C, ${
+      params.weather.sevenDays[0]?.rainMm !== undefined
+        ? `ปริมาณฝนวันนี้ ${params.weather.sevenDays[0].rainMm} มม. ตามพยากรณ์กรมอุตุนิยมวิทยา`
+        : params.weather.rainMetric === 'area'
+          ? `ฝนร้อยละ ${params.weather.rainProbability} ของพื้นที่ ตามพยากรณ์กรมอุตุนิยมวิทยา`
+          : `โอกาสฝน ${params.weather.rainProbability}%`
+    }, คำแนะนำ: ${params.weather.advisory})
 - งบประมาณรวม: ${params.totalBudget.toLocaleString()} บาท
 - จำนวนผู้ร่วมทริป: ${params.travelersCount} คน (งบเฉลี่ยประมาณ ${Math.round(params.totalBudget / Math.max(1, params.travelersCount))} บาท/คน)
 - สไตล์การเที่ยว: ${params.travelStyle}
-- สิทธิ์ตามระดับสมาชิก (Tier): ${params.tier} (สร้างจำนวน ${planCount} แผนการเดินทางที่แตกต่างกัน)
-
+${params.mustVisit && params.mustVisit.length > 0 ? `- สถานที่ที่ผู้ใช้อยากไป (ต้องจัดลงในแผนทุกแห่ง เรียงเส้นทางให้เหมาะสม): ${params.mustVisit.join(', ')}\n` : ''}- สิทธิ์ตามระดับสมาชิก (Tier): ${params.tier} (สร้างจำนวน ${planCount} แผนการเดินทางที่แตกต่างกัน)
+${
+  params.preferences
+    ? `
+ความต้องการเฉพาะของกลุ่มนี้ (ต้องปฏิบัติตามทุกข้อ และสะท้อนในกิจกรรม เวลา ค่าใช้จ่าย และ savingsTips):
+${buildPreferencePrompt(params.preferences, params.travelersCount, Math.round(params.totalBudget / Math.max(1, params.travelersCount)))}
+`
+    : ''
+}
 โปรดตอบกลับในรูปแบบ JSON อย่างเคร่งครัดตามโครงสร้างนี้เท่านั้น:
 {
   "plans": [

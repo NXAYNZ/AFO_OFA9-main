@@ -4,7 +4,8 @@ export interface TierConfig {
   name: SubscriptionTier;
   labelThai: string;
   priceMonthly: number;
-  maxQuotas: number;
+  maxQuotas: number; // ignored when unlimitedQuota
+  unlimitedQuota: boolean;
   planOptionsPerRequest: number;
   hasDeepOtaComparison: boolean;
   hasPriceAlert: boolean;
@@ -18,6 +19,7 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
     labelThai: 'แพ็กเกจ ฟรี (Free Tier)',
     priceMonthly: 0,
     maxQuotas: 2,
+    unlimitedQuota: false,
     planOptionsPerRequest: 1,
     hasDeepOtaComparison: false,
     hasPriceAlert: false,
@@ -29,6 +31,7 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
     labelThai: 'แพ็กเกจ โกลด์ (Gold Tier)',
     priceMonthly: 149,
     maxQuotas: 5,
+    unlimitedQuota: false,
     planOptionsPerRequest: 3,
     hasDeepOtaComparison: true,
     hasPriceAlert: false,
@@ -40,6 +43,7 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
     labelThai: 'แพ็กเกจ แพลทินัม (Platinum Tier)',
     priceMonthly: 299,
     maxQuotas: 10,
+    unlimitedQuota: true,
     planOptionsPerRequest: 5,
     hasDeepOtaComparison: true,
     hasPriceAlert: true,
@@ -47,6 +51,13 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
     badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-300',
   },
 };
+
+// Single source of truth for AI quota checks and labels (Platinum is unlimited)
+export const isQuotaExhausted = (tier: SubscriptionTier, used: number): boolean =>
+  !TIER_CONFIGS[tier].unlimitedQuota && used >= TIER_CONFIGS[tier].maxQuotas;
+
+export const quotaLabel = (tier: SubscriptionTier): string =>
+  TIER_CONFIGS[tier].unlimitedQuota ? 'ไม่จำกัด' : `${TIER_CONFIGS[tier].maxQuotas} ครั้ง/เดือน`;
 
 export interface UserProfile {
   id: string;
@@ -74,9 +85,46 @@ export interface WeatherDay {
   tempMin: number;
   tempMax: number;
   rainProbability: number;
+  // 24h rainfall forecast (TMD only; TMD does not publish a rain probability)
+  rainMm?: number;
   condition: string;
   icon: string;
 }
+
+// Traveller needs the planner turns into detailed prompt instructions (see lib/tripPrompt.ts)
+export type FoodStyle = 'local' | 'seafood' | 'cafe' | 'vegetarian' | 'halal' | 'not_spicy' | 'famous';
+export type Tolerance = 'low' | 'medium' | 'high';
+export type TransportMode = 'private_car' | 'rental_car' | 'public';
+
+export interface TripPreferences {
+  foodStyles: FoodStyle[];
+  sunTolerance: Tolerance;
+  rainTolerance: Tolerance;
+  elderlyCount: number;
+  disabledCount: number; // includes wheelchair users
+  transport: TransportMode;
+  // Free-text details the user types (age, mobility, vehicle...)
+  elderlyNote: string;
+  disabledNote: string;
+  transportNote: string;
+}
+
+// Destination + options sent to the AI planner from elsewhere (nonce changes on every send)
+export interface PlannerPreset {
+  province: string;
+  mustVisit: string[];
+  totalBudget?: number;
+  travelersCount?: number;
+  travelDates?: string;
+  travelStyle?: string;
+  // Start generating right away instead of only pre-filling the form
+  autoGenerate?: boolean;
+  // e.g. rental car chosen in the home search bar
+  preferences?: Partial<TripPreferences>;
+  nonce: number;
+}
+
+export type PlannerPresetOptions = Omit<PlannerPreset, 'province' | 'mustVisit' | 'totalBudget' | 'travelersCount' | 'nonce'>;
 
 export interface WeatherForecast {
   province: string;
@@ -88,6 +136,15 @@ export interface WeatherForecast {
   advisory: string;
   sevenDays: WeatherDay[];
   source: 'TMD_API' | 'OPEN_METEO_API' | 'FALLBACK_SYSTEM';
+  // 'area' = TMD "ฝนร้อยละ X ของพื้นที่" (rain coverage); default is rain probability
+  rainMetric?: 'probability' | 'area';
+  // Where currentTemp came from when the forecast itself is TMD's 7-day feed
+  currentTempSource?: 'OPEN_METEO' | 'TMD_FORECAST_MAX';
+  // Extra current-hour details from TMD
+  humidity?: number;
+  currentCondition?: string;
+  // ISO time the current values refer to
+  updatedAt?: string;
 }
 
 export interface ActivityItem {
@@ -184,6 +241,9 @@ export interface CommunityTrip {
   tripPoolBalance: number;
   highlights: string[];
   imageUrl: string;
+  // Host-uploaded photos (first = cover, same as imageUrl); browser-resized data URLs in demo mode
+  gallery?: string[];
+  description?: string;
   participants: TripParticipant[];
 }
 

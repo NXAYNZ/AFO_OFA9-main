@@ -21,11 +21,14 @@ import {
 } from '@/lib/auth';
 import { HeroBanner } from '@/components/HeroBanner';
 import { HomeTab } from '@/components/HomeTab';
+import { ThailandMapTab } from '@/components/ThailandMapTab';
 import { AiPlannerTab } from '@/components/AiPlannerTab';
 import { CommunityEscrowTab, JoinTripResult } from '@/components/CommunityEscrowTab';
 import { TrustReviewTab } from '@/components/TrustReviewTab';
 import { JudgeRevenueDashboardTab } from '@/components/JudgeRevenueDashboardTab';
 import { SubscriptionModal } from '@/components/SubscriptionModal';
+import { SettingsModal } from '@/components/SettingsModal';
+import { DisplaySettings, DEFAULT_SETTINGS, loadSettings, saveSettings, applySettings, resolveDark } from '@/lib/theme';
 import {
   SubscriptionTier,
   UserProfile,
@@ -35,7 +38,10 @@ import {
   RevenueMetrics,
   TripParticipant,
   OtaComparison,
+  PlannerPreset,
+  PlannerPresetOptions,
   TIER_CONFIGS,
+  quotaLabel,
 } from '@/lib/types';
 import {
   INITIAL_USER,
@@ -50,7 +56,54 @@ import {
 export default function HomePage() {
   // Navigation & Modal State
   const [activeTab, setActiveTab] = useState<string>('home');
+
+  // Hand-offs from the Thailand map into the AI planner / community trip form
+  const [aiPlannerPreset, setAiPlannerPreset] = useState<PlannerPreset | null>(null);
+  const [communityDraft, setCommunityDraft] = useState<{ title: string; destination: string; places: string[]; nonce: number } | null>(null);
+
+  const handlePlanFromMap = (
+    province: string,
+    places: string[],
+    totalBudget?: number,
+    travelersCount?: number,
+    options?: PlannerPresetOptions
+  ) => {
+    setAiPlannerPreset({ province, mustVisit: places, totalBudget, travelersCount, ...options, nonce: Date.now() });
+    setActiveTab('ai-planner');
+  };
+
+  const handleCreateTripFromMap = (title: string, destination: string, places: string[]) => {
+    setCommunityDraft({ title, destination, places, nonce: Date.now() });
+    setActiveTab('community');
+  };
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState<boolean>(false);
+
+  // Display settings (theme, reduced motion); the <head> script already applied them before paint
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [displaySettings, setDisplaySettings] = useState<DisplaySettings>(DEFAULT_SETTINGS);
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    const saved = loadSettings();
+    setDisplaySettings(saved);
+    setIsDark(resolveDark(saved.theme));
+  }, []);
+  const updateDisplaySettings = (next: DisplaySettings) => {
+    setDisplaySettings(next);
+    saveSettings(next);
+    applySettings(next);
+    setIsDark(resolveDark(next.theme));
+  };
+  // "ตามระบบ" follows the OS switching between light and dark
+  useEffect(() => {
+    if (displaySettings.theme !== 'system') return;
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => {
+      applySettings(displaySettings);
+      setIsDark(media.matches);
+    };
+    media.addEventListener('change', onChange);
+    return () => media.removeEventListener('change', onChange);
+  }, [displaySettings]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
 
@@ -234,7 +287,7 @@ export default function HomePage() {
         type: 'SUBSCRIPTION_UPGRADE',
         amount: tierConfig.priceMonthly,
         platformRevenue: tierConfig.priceMonthly,
-        description: `อัปเกรดสมาชิกเป็น ${tierConfig.labelThai} (โควตา AI ${tierConfig.maxQuotas} ครั้ง/เดือน)`,
+        description: `อัปเกรดสมาชิกเป็น ${tierConfig.labelThai} (โควตา AI ${quotaLabel(newTier)})`,
         timestamp: 'เพิ่งเกิดขึ้น',
       };
 
@@ -249,6 +302,8 @@ export default function HomePage() {
   };
 
   const handleQuotaIncrement = () => {
+    // Platinum is unlimited: nothing to count down
+    if (TIER_CONFIGS[currentTier].unlimitedQuota) return;
     const nextQuota = aiQuotaUsed + 1;
     setAiQuotaUsed(nextQuota);
     try {
@@ -425,6 +480,8 @@ export default function HomePage() {
       cancellationPenaltyRate: 0.10,
       tripPoolBalance: newTripData.securityDepositPerPerson || 1000,
       highlights: newTripData.highlights || ['🛡️ มีสัญญา Smart Escrow ค้ำประกันมัดจำ'],
+      gallery: newTripData.gallery,
+      description: newTripData.description,
       imageUrl: newTripData.imageUrl || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
       participants: [
         {
@@ -508,6 +565,9 @@ export default function HomePage() {
         onSignIn={() => setIsAuthModalOpen(true)}
         onEditProfile={handleOpenProfile}
         onSignOut={handleSignOut}
+        isDark={isDark}
+        onToggleTheme={() => updateDisplaySettings({ ...displaySettings, theme: isDark ? 'light' : 'dark' })}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       <div className="flex">
@@ -520,6 +580,7 @@ export default function HomePage() {
         isMobileOpen={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
         onOpenUpgradeModal={() => setIsUpgradeModalOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
         currentTier={currentTier}
         totalRevenue={revenueMetrics.totalRevenue}
       />
@@ -546,6 +607,7 @@ export default function HomePage() {
               currentTier={currentTier}
               aiQuotaUsed={aiQuotaUsed}
               onNavigate={setActiveTab}
+              onPlanTrip={handlePlanFromMap}
               onSignIn={() => setIsAuthModalOpen(true)}
               onOpenProfile={handleOpenProfile}
               onOpenUpgradeModal={() => setIsUpgradeModalOpen(true)}
@@ -559,6 +621,24 @@ export default function HomePage() {
               onQuotaIncrement={handleQuotaIncrement}
               onOpenUpgradeModal={() => setIsUpgradeModalOpen(true)}
               onRecordAffiliateClick={handleRecordAffiliateClick}
+              preset={aiPlannerPreset}
+              onPresetUsed={() => setAiPlannerPreset(null)}
+            />
+          )}
+
+          {activeTab === 'thailand-map' && (
+            <ThailandMapTab
+              onPlanWithAi={handlePlanFromMap}
+              onCreateCommunityTrip={handleCreateTripFromMap}
+              reviewer={
+                memberProfile
+                  ? {
+                      name: memberProfile.nickname || memberProfile.fullName,
+                      avatarUrl: memberProfile.avatarUrl,
+                      authUserId: authUser?.id,
+                    }
+                  : null
+              }
             />
           )}
 
@@ -572,6 +652,8 @@ export default function HomePage() {
               allTrips={allCommunityTrips}
               userProfile={currentUser}
               memberProfile={memberProfile}
+              draft={communityDraft}
+              onDraftUsed={() => setCommunityDraft(null)}
             />
           )}
 
@@ -625,6 +707,13 @@ export default function HomePage() {
       </div>
 
       {/* Subscription Paywall Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        settings={displaySettings}
+        onChange={updateDisplaySettings}
+        onClose={() => setIsSettingsOpen(false)}
+      />
+
       <SubscriptionModal
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}

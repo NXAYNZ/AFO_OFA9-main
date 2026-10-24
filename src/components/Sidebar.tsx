@@ -11,6 +11,7 @@ import {
   PlusCircle,
   Map as MapIcon,
   Crown,
+  Settings,
   BadgeCheck,
   Compass,
   X,
@@ -27,6 +28,7 @@ interface SidebarProps {
   isMobileOpen: boolean;
   onCloseMobile: () => void;
   onOpenUpgradeModal: () => void;
+  onOpenSettings: () => void;
   currentTier: SubscriptionTier;
   totalRevenue: number;
 }
@@ -37,7 +39,7 @@ interface SidebarItem {
   tab?: string;
   // Only primary items show the active highlight (secondary items are shortcuts into the same tabs)
   primary?: boolean;
-  action?: 'upgrade';
+  action?: 'upgrade' | 'settings';
   badge?: 'new' | 'live' | 'revenue' | 'tier';
 }
 
@@ -46,6 +48,7 @@ const SIDEBAR_GROUPS: { title: string; items: SidebarItem[] }[] = [
     title: 'เมนูหลัก',
     items: [
       { label: 'หน้าหลัก', icon: Home, tab: 'home', primary: true },
+      { label: 'แผนที่เที่ยวไทย', icon: MapIcon, tab: 'thailand-map', primary: true, badge: 'new' },
       { label: 'AI Planner & OTA', icon: Sparkles, tab: 'ai-planner', primary: true },
       { label: 'Community Escrow', icon: ShieldCheck, tab: 'community', primary: true, badge: 'live' },
       { label: 'รีวิว & ผู้ร่วมทริป', icon: Users, tab: 'trust-review', primary: true },
@@ -66,6 +69,7 @@ const SIDEBAR_GROUPS: { title: string; items: SidebarItem[] }[] = [
     items: [
       { label: 'คะแนนความน่าเชื่อถือ', icon: BadgeCheck, tab: 'trust-review' },
       { label: 'อัปเกรดสมาชิก', icon: Crown, action: 'upgrade', badge: 'tier' },
+      { label: 'ตั้งค่า & ธีม', icon: Settings, action: 'settings' },
     ],
   },
 ];
@@ -77,6 +81,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isMobileOpen,
   onCloseMobile,
   onOpenUpgradeModal,
+  onOpenSettings,
   currentTier,
   totalRevenue,
 }) => {
@@ -93,6 +98,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const handleItemClick = (item: SidebarItem) => {
     if (item.action === 'upgrade') {
       onOpenUpgradeModal();
+    } else if (item.action === 'settings') {
+      onOpenSettings();
     } else if (item.tab) {
       setActiveTab(item.tab);
     }
