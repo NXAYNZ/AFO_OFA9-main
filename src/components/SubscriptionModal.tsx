@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
-import { Crown, Check, Zap, Sparkles, Shield, X } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Check, Minus, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { SubscriptionTier, TIER_CONFIGS } from '@/lib/types';
+import { SubscriptionTier } from '@/lib/types';
 
 interface SubscriptionModalProps {
   isOpen: boolean;
@@ -12,196 +12,153 @@ interface SubscriptionModalProps {
   onSelectTier: (tier: SubscriptionTier) => void;
 }
 
-export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
-  isOpen,
-  onClose,
-  currentTier,
-  onSelectTier,
-}) => {
+const PLANS: {
+  tier: SubscriptionTier;
+  name: string;
+  price: number;
+  audience: string;
+  recommended?: boolean;
+  features: { text: React.ReactNode; included: boolean }[];
+}[] = [
+  {
+    tier: 'FREE',
+    name: 'Free',
+    price: 0,
+    audience: 'สำหรับทดลองใช้งาน',
+    features: [
+      { text: <>AI วางแผนเที่ยว <strong>2 ครั้งต่อเดือน</strong></>, included: true },
+      { text: <>แผนการเดินทาง <strong>1 ตัวเลือก</strong></>, included: true },
+      { text: 'พยากรณ์อากาศกรมอุตุฯ (TMD / Open-Meteo)', included: true },
+      { text: 'เปรียบเทียบราคา OTA เชิงลึก', included: false },
+      { text: 'ส่วนลดค่าเปิดทริป', included: false },
+    ],
+  },
+  {
+    tier: 'GOLD',
+    name: 'Gold',
+    price: 149,
+    audience: 'สำหรับสายเที่ยวที่คุมงบ',
+    recommended: true,
+    features: [
+      { text: <>AI วางแผนเที่ยว <strong>5 ครั้งต่อเดือน</strong></>, included: true },
+      { text: <>สร้างพร้อมกัน <strong>3 แผนทางเลือก</strong></>, included: true },
+      { text: 'เทียบราคา OTA เชิงลึก (Agoda vs Trip.com)', included: true },
+      { text: <>ส่วนลดค่าเปิดทริป Escrow <strong>50%</strong></>, included: true },
+    ],
+  },
+  {
+    tier: 'PLATINUM',
+    name: 'Platinum',
+    price: 299,
+    audience: 'สำหรับหัวหน้าทริปและผู้จัดทริป',
+    features: [
+      { text: <>AI วางแผนเที่ยว <strong>ไม่จำกัด</strong></>, included: true },
+      { text: <>สร้างพร้อมกัน <strong>5 แผนทางเลือก</strong></>, included: true },
+      { text: 'แจ้งเตือนราคาลดตามฤดูกาล', included: true },
+      { text: <><strong>ไม่มีค่าเปิดทริป</strong> (ยกเว้น 3.5%)</>, included: true },
+    ],
+  },
+];
+
+export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ isOpen, onClose, currentTier, onSelectTier }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleUpgrade = (tier: SubscriptionTier) => {
-    // Trigger festive confetti!
-    confetti({
-      particleCount: 80,
-      spread: 70,
-      origin: { y: 0.6 },
-    });
+    if (tier !== 'FREE') {
+      confetti({
+        particleCount: 70,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#1a7d71', '#c27f1e', '#13233a', '#6fb4a8', '#e2ae57'],
+        disableForReducedMotion: true,
+      });
+    }
     onSelectTier(tier);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fadeIn">
-      <div className="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-10 shadow-2xl border border-slate-200 relative overflow-hidden max-h-[90vh] overflow-y-auto">
-        
-        {/* Close Button */}
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-ink-950/70 animate-backdropIn" onClick={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="plans-title"
+        className="bg-white rounded-xl max-w-4xl w-full shadow-2xl relative max-h-[90vh] overflow-y-auto animate-popIn"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center font-bold transition-all"
+          className="absolute top-4 right-4 w-9 h-9 rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-900 flex items-center justify-center transition-colors"
+          aria-label="ปิด"
         >
           <X className="w-5 h-5" />
         </button>
 
-        {/* Modal Header */}
-        <div className="text-center max-w-xl mx-auto mb-8">
-          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 mb-3 border border-amber-300">
-            <Crown className="w-3.5 h-3.5 text-amber-700" />
-            <span>&ldquo;Make Me Money&rdquo; Tiered Subscription Model</span>
-          </div>
-          <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-            ยกระดับการเดินทางด้วยแพ็กเกจ TripSure AI
-          </h3>
-          <p className="text-sm text-slate-500 mt-2">
-            เพิ่มโควตาการประมวลผล AI วางแผนเที่ยว ปลดล็อกตารางเปรียบเทียบราคา OTA เชิงลึก และฟรีค่าธรรมเนียมจัดทริป Escrow 100%
+        <div className="px-6 sm:px-10 pt-8 sm:pt-10 max-w-xl">
+          <h3 id="plans-title" className="font-display text-3xl font-semibold text-slate-900">เลือกแพ็กเกจ</h3>
+          <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+            เพิ่มโควตา AI วางแผนเที่ยว ปลดล็อกการเทียบราคาเชิงลึก และลดค่าธรรมเนียมเปิดทริป Escrow
           </p>
         </div>
 
-        {/* 3 Tier Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          {/* FREE TIER */}
-          <div className="rounded-2xl p-6 border-2 border-slate-200 bg-white flex flex-col justify-between hover:border-slate-300 transition-all">
-            <div>
-              <div className="font-bold text-slate-700 text-base">Free Plan</div>
-              <p className="text-xs text-slate-400 mt-0.5">สำหรับผู้ทดลองใช้งานทั่วไป</p>
-              
-              <div className="mt-4 mb-6">
-                <span className="text-3xl font-black font-mono text-slate-900">฿0</span>
-                <span className="text-xs text-slate-400 ml-1">/ เดือน</span>
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 border-t border-slate-200 md:divide-x divide-slate-200">
+          {PLANS.map((plan) => {
+            const isCurrent = currentTier === plan.tier;
+            return (
+              <div key={plan.tier} className={`relative flex flex-col p-6 sm:p-8 ${plan.recommended ? 'bg-amber-50/60' : ''}`}>
+                {plan.recommended && <span className="absolute inset-x-0 top-0 h-1 bg-amber-500" aria-hidden />}
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="font-display text-xl font-semibold text-slate-900">{plan.name}</span>
+                  {plan.recommended && <span className="text-xs font-semibold text-amber-800">ยอดนิยม</span>}
+                </div>
+                <p className="mt-0.5 text-sm text-slate-500">{plan.audience}</p>
+
+                <div className="mt-5 flex items-baseline gap-1">
+                  <span className="font-mono text-4xl font-semibold text-slate-900">฿{plan.price}</span>
+                  <span className="text-sm text-slate-500">ต่อเดือน</span>
+                </div>
+
+                <ul className="mt-6 space-y-2.5 text-sm flex-1">
+                  {plan.features.map((f, i) => (
+                    <li key={i} className={`flex items-start gap-2 ${f.included ? 'text-slate-700' : 'text-slate-400'}`}>
+                      {f.included ? (
+                        <Check className="w-4 h-4 mt-0.5 text-emerald-600 shrink-0" />
+                      ) : (
+                        <Minus className="w-4 h-4 mt-0.5 shrink-0" />
+                      )}
+                      <span>{f.text}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={() => handleUpgrade(plan.tier)}
+                  disabled={isCurrent}
+                  className={`mt-7 w-full h-11 rounded-md text-sm font-semibold transition-colors disabled:cursor-default ${
+                    isCurrent
+                      ? 'border border-slate-200 text-slate-500'
+                      : plan.recommended
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      : 'border border-slate-300 text-slate-800 hover:border-slate-500'
+                  }`}
+                >
+                  {isCurrent ? 'แพ็กเกจปัจจุบัน' : plan.price === 0 ? 'เปลี่ยนเป็น Free' : `อัปเกรดเป็น ${plan.name}`}
+                </button>
               </div>
-
-              <ul className="space-y-3 text-xs text-slate-600">
-                <li className="flex items-center space-x-2">
-                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>AI วางแผนเที่ยว <strong>2 ครั้ง / เดือน</strong></span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>สร้างแผนการเดินทาง <strong>1 ตัวเลือก</strong></span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>พยากรณ์อากาศกรมอุตุฯ (TMD / Open-Meteo)</span>
-                </li>
-                <li className="flex items-center space-x-2 text-slate-400 line-through">
-                  <span>เปรียบเทียบราคา OTA เชิงลึก</span>
-                </li>
-                <li className="flex items-center space-x-2 text-slate-400 line-through">
-                  <span>ส่วนลดค่าเปิดทริป 3.5%</span>
-                </li>
-              </ul>
-            </div>
-
-            <button
-              onClick={() => handleUpgrade('FREE')}
-              disabled={currentTier === 'FREE'}
-              className="mt-6 w-full py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all disabled:opacity-50"
-            >
-              {currentTier === 'FREE' ? 'ใช้งานแพ็กเกจนี้อยู่' : 'เลือก Free Plan'}
-            </button>
-          </div>
-
-          {/* GOLD TIER */}
-          <div className="rounded-2xl p-6 border-2 border-amber-400 bg-gradient-to-b from-amber-50/50 to-white flex flex-col justify-between shadow-lg relative">
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-3 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-sm">
-              คุ้มค่ายอดนิยม (Most Popular)
-            </div>
-
-            <div>
-              <div className="font-extrabold text-amber-900 text-base flex items-center space-x-1.5">
-                <span>Gold Plan</span>
-                <Sparkles className="w-4 h-4 text-amber-600" />
-              </div>
-              <p className="text-xs text-amber-700/80 mt-0.5">สำหรับสายเที่ยวตัวยงที่ชอบคุมงบ</p>
-
-              <div className="mt-4 mb-6">
-                <span className="text-3xl font-black font-mono text-slate-900">฿149</span>
-                <span className="text-xs text-slate-400 ml-1">/ เดือน</span>
-              </div>
-
-              <ul className="space-y-3 text-xs text-slate-700">
-                <li className="flex items-center space-x-2">
-                  <Check className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>AI วางแผนเที่ยว <strong>5 ครั้ง / เดือน</strong></span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <Check className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>สร้างแผนพร้อมกัน <strong>3 แผนทางเลือก</strong></span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <Check className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>Deep OTA Price Comparison (Agoda vs Trip.com)</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <Check className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>ส่วนลดค่าเปิดทริป Escrow <strong>50%</strong></span>
-                </li>
-              </ul>
-            </div>
-
-            <button
-              onClick={() => handleUpgrade('GOLD')}
-              disabled={currentTier === 'GOLD'}
-              className="mt-6 w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 text-xs font-black shadow-md transition-all disabled:opacity-50"
-            >
-              {currentTier === 'GOLD' ? 'ใช้งานแพ็กเกจนี้อยู่' : 'อัปเกรดเป็น Gold (฿149)'}
-            </button>
-          </div>
-
-          {/* PLATINUM TIER */}
-          <div className="rounded-2xl p-6 border-2 border-indigo-600 bg-gradient-to-b from-indigo-50/50 to-white flex flex-col justify-between shadow-xl relative">
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-3 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider shadow-sm">
-              SUPER HOST VIP
-            </div>
-
-            <div>
-              <div className="font-extrabold text-indigo-950 text-base flex items-center space-x-1.5">
-                <span>Platinum Plan</span>
-                <Crown className="w-4 h-4 text-indigo-600" />
-              </div>
-              <p className="text-xs text-indigo-700/80 mt-0.5">สำหรับหัวหน้าทริป & ผู้จัดทริปมืออาชีพ</p>
-
-              <div className="mt-4 mb-6">
-                <span className="text-3xl font-black font-mono text-slate-900">฿299</span>
-                <span className="text-xs text-slate-400 ml-1">/ เดือน</span>
-              </div>
-
-              <ul className="space-y-3 text-xs text-slate-700">
-                <li className="flex items-center space-x-2">
-                  <Check className="w-4 h-4 text-indigo-600 shrink-0" />
-                  <span>AI วางแผนเที่ยว <strong>ไม่จำกัดจำนวนครั้ง</strong></span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <Check className="w-4 h-4 text-indigo-600 shrink-0" />
-                  <span>สร้างแผนพร้อมกัน <strong>5 แผนทางเลือก</strong></span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <Check className="w-4 h-4 text-indigo-600 shrink-0" />
-                  <span>Historical Season Price Alert แจ้งเตือนราคาลด</span>
-                </li>
-                <li className="flex items-center space-x-2 font-bold text-indigo-900">
-                  <Shield className="w-4 h-4 text-indigo-600 shrink-0" />
-                  <span>ฟรีค่าธรรมเนียมจัดทริป 3.5% (Waiver 0%)</span>
-                </li>
-              </ul>
-            </div>
-
-            <button
-              onClick={() => handleUpgrade('PLATINUM')}
-              disabled={currentTier === 'PLATINUM'}
-              className="mt-6 w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white text-xs font-black shadow-md transition-all disabled:opacity-50"
-            >
-              {currentTier === 'PLATINUM' ? 'ใช้งานแพ็กเกจนี้อยู่' : 'อัปเกรดเป็น Platinum (฿299)'}
-            </button>
-          </div>
-
+            );
+          })}
         </div>
 
-        <div className="text-center text-xs text-slate-400 mt-6">
-          * ระบบจำลองการชำระเงิน Stripe Checkout แบบสมจริงโดยไม่ต้องใส่บัตรเครดิตจริงสำหรับการตัดสิน Hackathon
-        </div>
-
+        <p className="px-6 sm:px-10 py-4 border-t border-slate-200 text-xs text-slate-500">
+          โหมดสาธิต: จำลองการชำระเงินโดยไม่ต้องใช้บัตรเครดิตจริง
+        </p>
       </div>
     </div>
   );

@@ -8,14 +8,11 @@ import {
   ArrowRight,
   PlusCircle,
   CheckCircle2,
-  DollarSign,
   Calendar,
   MapPin,
-  Sparkles,
   Info,
-  Clock,
   Coins,
-  Award,
+  Lock,
 } from 'lucide-react';
 import {
   CommunityTrip,
@@ -24,6 +21,8 @@ import {
   SubscriptionTier,
 } from '@/lib/types';
 import { CreateTripWindow, TripSeed } from '@/components/CreateTripWindow';
+import { TripTicket, ticketNumber } from '@/components/TripTicket';
+import { stripEmoji } from '@/lib/text';
 
 const DEFAULT_SEED: TripSeed = { title: '', destination: 'เกาะล้าน จ.ชลบุรี', places: [] };
 
@@ -91,13 +90,13 @@ export const CommunityEscrowTab: React.FC<CommunityEscrowTabProps> = ({
     if (result === 'JOINED') {
       setJoinBlockedMsg(null);
       setJoinSuccessMsg(
-        `🎉 คุณได้เข้าร่วมทริป "${trip.title}" และระบบได้ล็อกเงินมัดจำ ${trip.securityDepositPerPerson.toLocaleString()} บาท เข้าบัญชี Smart Escrow เรียบร้อยแล้ว!`
+        `เข้าร่วมทริป "${trip.title}" แล้ว ระบบล็อกเงินมัดจำ ฿${trip.securityDepositPerPerson.toLocaleString()} ไว้ใน Smart Escrow เรียบร้อย`
       );
       setTimeout(() => setJoinSuccessMsg(null), 6000);
       return;
     }
     const blockedMessages: Record<Exclude<JoinTripResult, 'JOINED'>, string> = {
-      NEEDS_PROFILE: '👤 ต้องสร้างโปรไฟล์สมาชิกบนเว็บก่อน (ชื่อ-นามสกุล และชื่อเล่น) จึงจะเข้าร่วมทริปและวางเงินมัดจำได้',
+      NEEDS_PROFILE: 'ต้องสร้างโปรไฟล์สมาชิกบนเว็บก่อน (ชื่อ-นามสกุล และชื่อเล่น) จึงจะเข้าร่วมทริปและวางเงินมัดจำได้',
       ALREADY_JOINED: 'คุณเข้าร่วมทริปนี้และวางเงินมัดจำไว้แล้ว',
       FULL: 'ทริปนี้เต็มแล้ว',
     };
@@ -109,412 +108,301 @@ export const CommunityEscrowTab: React.FC<CommunityEscrowTabProps> = ({
   const handleFlakeClick = () => {
     if (!flakyParticipant) return;
     onSimulateFlake(heroTrip, flakyParticipant);
-    setFlakeSuccessMsg(`🚨 จำลองสำเร็จ! สมาชิก "${flakyParticipant.fullName}" ยกเลิกทริปกระทันหัน: ระบบหักค่าปรับ 10% (150 บาท) โดยแบ่ง 75 บาทเข้าแพลตฟอร์ม และ 75 บาทชดเชยให้เพื่อนที่เหลือ 5 คนทันที!`);
+    setFlakeSuccessMsg(
+      `จำลองแล้ว: "${flakyParticipant.fullName}" ยกเลิกทริปกะทันหัน ระบบหักค่าปรับ 10% (150 บาท) แบ่ง 75 บาทเข้าแพลตฟอร์ม และ 75 บาทชดเชยให้เพื่อนที่เหลือในกลุ่ม`
+    );
     setTimeout(() => setFlakeSuccessMsg(null), 8000);
   };
 
   const handleCreateTrip = (trip: Partial<CommunityTrip>, finalFee: number) => {
     onCreateNewTrip(trip);
     setShowCreateModal(false);
-    setJoinSuccessMsg(`✨ เปิดทริป "${trip.title}" สำเร็จ! บันทึกค่าธรรมเนียมคุ้มครอง ${finalFee.toLocaleString()} บาท เข้าสู่ระบบ`);
+    setJoinSuccessMsg(`เปิดทริป "${trip.title}" แล้ว บันทึกค่าธรรมเนียมคุ้มครอง ฿${finalFee.toLocaleString()} เข้าระบบ`);
     setTimeout(() => setJoinSuccessMsg(null), 5000);
   };
 
+  const fillPercent = Math.round((heroTrip.joinedSlots / heroTrip.totalSlots) * 100);
+  const creationFee = Math.round(heroTrip.totalSlots * heroTrip.costPerPerson * 0.035);
+  const penalty = Math.round(heroTrip.securityDepositPerPerson * 0.1);
+  const heroFull = heroTrip.joinedSlots >= heroTrip.totalSlots;
+
   return (
-    <div className="space-y-8">
-      
-      {/* SECTION HEADER & QUICK CREATE TRIGGER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-4">
+    <div className="space-y-12">
+
+      {/* Page header */}
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="p-2 rounded-xl bg-indigo-100 text-indigo-700">
-              <ShieldCheck className="w-5 h-5" />
-            </span>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-              Community Trip Escrow & Anti-Flake Penalty Engine
-            </h2>
-          </div>
-          <p className="text-sm text-slate-500 mt-1">
-            ระบบจัดทริปกลุ่มที่ผสาน Smart Escrow ล็อกเงินมัดจำ: หากใครเททริป โดนหัก 10% (5% แพลตฟอร์ม + 5% ชดเชยเพื่อนในกลุ่ม)
+          <h2 className="font-display text-3xl font-semibold text-slate-900">Community Escrow</h2>
+          <p className="mt-1.5 max-w-2xl text-sm text-slate-600 leading-relaxed">
+            ทริปกลุ่มที่ทุกคนล็อกเงินมัดจำไว้ใน Smart Escrow ใครเททริปถูกหัก 10% โดย 5% เข้าแพลตฟอร์ม และอีก 5% ชดเชยให้เพื่อนในกลุ่ม
           </p>
         </div>
-
         <button
           onClick={() => openCreate()}
-          className="self-start sm:self-center px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md shadow-indigo-600/20 flex items-center space-x-2 transition-all transform hover:-translate-y-0.5"
+          className="self-start sm:self-auto h-11 px-4 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center gap-2 transition-colors"
         >
           <PlusCircle className="w-4 h-4" />
-          <span>สร้างทริปใหม่ (+3.5% Platform Fee)</span>
+          สร้างทริปใหม่
         </button>
-      </div>
+      </header>
 
-      {/* FEEDBACK ALERTS */}
-      {joinSuccessMsg && (
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-sm flex items-center space-x-3 shadow-sm animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-          <span className="font-semibold">{joinSuccessMsg}</span>
-        </div>
-      )}
-
-      {joinBlockedMsg && (
-        <div className="p-4 rounded-2xl bg-sky-50 border border-sky-300 text-sky-900 text-sm flex items-center space-x-3 shadow-sm animate-fadeIn">
-          <Info className="w-5 h-5 text-sky-600 shrink-0" />
-          <span className="font-semibold">{joinBlockedMsg}</span>
-        </div>
-      )}
-
-      {!memberProfile && !joinBlockedMsg && (
-        <div className="p-3.5 rounded-2xl bg-slate-100 border border-slate-200 text-slate-700 text-xs flex items-center space-x-2">
-          <Info className="w-4 h-4 text-slate-500 shrink-0" />
-          <span>เข้าสู่ระบบด้วย Google และสร้างโปรไฟล์ก่อน จึงจะเข้าร่วมทริปได้ — ชื่อ-นามสกุลและชื่อเล่นของคุณจะแสดงในรายชื่อสมาชิกที่วางเงินค้ำประกัน</span>
-        </div>
-      )}
-
-      {flakeSuccessMsg && (
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 text-sm flex items-center space-x-3 shadow-sm animate-fadeIn">
-          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
-          <span className="font-semibold">{flakeSuccessMsg}</span>
-        </div>
-      )}
-
-      {/* FEATURE HERO: KOH SAMET 8-PERSON TRIP */}
-      <div className="bg-white rounded-3xl border-2 border-indigo-500/30 overflow-hidden shadow-xl">
-        <div className="grid grid-cols-1 lg:grid-cols-12">
-          
-          {/* Trip Image & Badges (5 cols) */}
-          <div className="lg:col-span-5 relative min-h-[300px] lg:min-h-full">
-            <img
-              src={heroTrip.imageUrl}
-              alt={heroTrip.title}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-            
-            <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-              <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-500 text-slate-950 shadow-md">
-                🛡️ Escrow Guaranteed 100%
-              </span>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/90 text-slate-900 backdrop-blur-sm">
-                เกาะเสม็ด ระยอง
-              </span>
+      {/* Feedback */}
+      {(joinSuccessMsg || joinBlockedMsg || flakeSuccessMsg || !memberProfile) && (
+        <div className="space-y-2" aria-live="polite">
+          {joinSuccessMsg && (
+            <div className="px-4 py-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm flex items-start gap-3 animate-fadeIn">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              <span>{joinSuccessMsg}</span>
             </div>
+          )}
+          {joinBlockedMsg && (
+            <div className="px-4 py-3 rounded-md bg-sky-50 border border-sky-200 text-sky-900 text-sm flex items-start gap-3 animate-fadeIn">
+              <Info className="w-5 h-5 text-sky-600 shrink-0" />
+              <span>{joinBlockedMsg}</span>
+            </div>
+          )}
+          {flakeSuccessMsg && (
+            <div className="px-4 py-3 rounded-md bg-rose-50 border border-rose-200 text-rose-900 text-sm flex items-start gap-3 animate-fadeIn">
+              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
+              <span>{flakeSuccessMsg}</span>
+            </div>
+          )}
+          {!memberProfile && !joinBlockedMsg && (
+            <div className="px-4 py-3 rounded-md border border-slate-200 text-slate-600 text-sm flex items-start gap-3">
+              <Info className="w-4 h-4 mt-0.5 text-slate-400 shrink-0" />
+              <span>เข้าสู่ระบบด้วย Google และสร้างโปรไฟล์ก่อนจึงจะเข้าร่วมทริปได้ ชื่อและชื่อเล่นของคุณจะแสดงในรายชื่อสมาชิกที่วางเงินค้ำประกัน</span>
+            </div>
+          )}
+        </div>
+      )}
 
-            <div className="absolute bottom-4 left-4 right-4 text-white">
-              <div className="text-xs font-semibold text-slate-300 flex items-center space-x-1">
+      {/* Featured trip: a boarding pass with the money on the stub */}
+      <article className="ticket overflow-hidden shadow-md">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)_minmax(0,3fr)]">
+
+          {/* Photo */}
+          <div className="relative min-h-[300px] lg:min-h-[460px] rounded-t-[9px] lg:rounded-tr-none lg:rounded-l-[9px] overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={heroTrip.imageUrl} alt={heroTrip.title} className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+            <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded bg-ink-950/70 px-2 py-1 text-xs font-medium text-white">
+              <MapPin className="w-3.5 h-3.5" />
+              {heroTrip.destination}
+            </span>
+            {heroTrip.imageCredit && (
+              <span className="absolute top-4 right-4 max-w-[60%] truncate rounded bg-ink-950/55 px-1.5 py-0.5 text-[10px] text-white/85">
+                {heroTrip.imageCredit}
+              </span>
+            )}
+            <div className="absolute bottom-0 inset-x-0 p-5 sm:p-6 text-white">
+              <div className="flex items-center gap-1.5 text-xs text-white/75">
                 <Calendar className="w-3.5 h-3.5" />
-                <span>{heroTrip.travelDates}</span>
+                {heroTrip.travelDates}
               </div>
-              <h3 className="text-xl sm:text-2xl font-black mt-1 leading-snug">
-                {heroTrip.title}
-              </h3>
-              
-              {/* Host Tag */}
-              <div className="mt-3 flex items-center space-x-2 bg-slate-900/80 backdrop-blur-sm p-2 rounded-xl border border-white/10">
-                <img
-                  src={heroTrip.host.avatarUrl}
-                  alt={heroTrip.host.fullName}
-                  className="w-8 h-8 rounded-full border border-emerald-400"
-                />
-                <div className="text-xs">
-                  <div className="font-bold flex items-center space-x-1">
-                    <span>{heroTrip.host.fullName}</span>
-                    <span className="text-[10px] bg-amber-400 text-slate-900 px-1 rounded font-extrabold">SUPER HOST</span>
+              <h3 className="mt-1.5 font-display text-2xl sm:text-[1.7rem] font-semibold leading-snug">{heroTrip.title}</h3>
+              <div className="mt-4 flex items-center gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={heroTrip.host.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover ring-2 ring-white/30" />
+                <div className="text-xs leading-relaxed">
+                  <div className="font-semibold">
+                    {heroTrip.host.fullName}
+                    <span className="ml-2 rounded-sm bg-saffron-400 px-1 py-px text-[10px] font-bold tracking-wide text-ink-950">SUPER HOST</span>
                   </div>
-                  <div className="text-emerald-400 font-semibold">
-                    Trust Score {heroTrip.host.trustScore}% • ไม่เคยเท 24 ทริป
-                  </div>
+                  <div className="text-white/75">Trust Score {heroTrip.host.trustScore}% · ไม่เคยเท 24 ทริป</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Trip Details & Live Calculator (7 cols) */}
-          <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-between space-y-6">
-            
-            {/* Slot & Pool KPI Row */}
-            <div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-                  <div className="text-xs text-slate-500 font-medium">ค่าใช้จ่าย/คน</div>
-                  <div className="text-xl font-black font-mono text-slate-900 mt-0.5">
-                    ฿{heroTrip.costPerPerson.toLocaleString()}
-                  </div>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-indigo-50 border border-indigo-200">
-                  <div className="text-xs text-indigo-700 font-semibold">เงินมัดจำ Escrow</div>
-                  <div className="text-xl font-black font-mono text-indigo-700 mt-0.5">
-                    ฿{heroTrip.securityDepositPerPerson.toLocaleString()}
-                  </div>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200">
-                  <div className="text-xs text-emerald-700 font-semibold">สมาชิกในกลุ่ม</div>
-                  <div className="text-xl font-black font-mono text-emerald-700 mt-0.5">
-                    {heroTrip.joinedSlots} / {heroTrip.totalSlots} คน
-                  </div>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200">
-                  <div className="text-xs text-amber-800 font-semibold">กองกลางที่ล็อกไว้</div>
-                  <div className="text-xl font-black font-mono text-amber-800 mt-0.5">
-                    ฿{heroTrip.tripPoolBalance.toLocaleString()}
-                  </div>
-                </div>
+          {/* Body: itinerary facts */}
+          <div className="p-6 sm:p-7 flex flex-col">
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-5">
+              <div>
+                <dt className="text-xs text-slate-500">ค่าใช้จ่ายต่อคน</dt>
+                <dd className="mt-1 font-mono text-2xl font-semibold text-slate-900">฿{heroTrip.costPerPerson.toLocaleString()}</dd>
               </div>
-
-              {/* Progress Bar */}
-              <div className="mt-4">
-                <div className="flex justify-between text-xs font-semibold text-slate-600 mb-1">
-                  <span>ความจุทริป (Capacity)</span>
-                  <span className="font-mono">{Math.round((heroTrip.joinedSlots / heroTrip.totalSlots) * 100)}% เต็มแล้ว</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-emerald-500 to-indigo-600 rounded-full transition-all duration-500"
-                    style={{ width: `${(heroTrip.joinedSlots / heroTrip.totalSlots) * 100}%` }}
-                  />
-                </div>
+              <div>
+                <dt className="text-xs text-slate-500">สมาชิกในกลุ่ม</dt>
+                <dd className="mt-1 font-mono text-2xl font-semibold text-slate-900">
+                  {heroTrip.joinedSlots}<span className="text-slate-400">/{heroTrip.totalSlots}</span>
+                </dd>
               </div>
+            </dl>
 
-              {/* Highlights */}
-              <div className="mt-5 space-y-1.5">
-                <div className="text-xs font-bold text-slate-700 uppercase tracking-wider">ไฮไลต์ของทริปนี้:</div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700">
-                  {heroTrip.highlights.map((h, i) => (
-                    <div key={i} className="flex items-center space-x-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>{h}</span>
-                    </div>
-                  ))}
-                </div>
+            <div className="mt-5">
+              <div className="flex justify-between text-xs text-slate-500 mb-1.5">
+                <span>ที่นั่งที่จองแล้ว</span>
+                <span className="font-mono">{fillPercent}%</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                <div className="h-full rounded-full bg-emerald-500 transition-[width] duration-500" style={{ width: `${fillPercent}%` }} />
               </div>
             </div>
 
-            {/* TRANSPARENT TAX & PENALTY ENGINE WIDGET */}
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-indigo-950 text-white border border-indigo-800/60 shadow-lg">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <div className="flex items-center space-x-2">
-                  <Coins className="w-5 h-5 text-amber-400" />
-                  <span className="font-bold text-sm text-amber-300">
-                    Transparent Escrow Fee & 10% Penalty Tax Breakdown
-                  </span>
-                </div>
-                <span className="text-[11px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">
-                  Make Me Money Engine
-                </span>
-              </div>
+            <h4 className="mt-7 text-sm font-semibold text-slate-900">ไฮไลต์ของทริป</h4>
+            <ul className="mt-2 space-y-2 text-sm text-slate-600">
+              {heroTrip.highlights.map((h, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 mt-0.5 text-emerald-600 shrink-0" />
+                  <span>{stripEmoji(h)}</span>
+                </li>
+              ))}
+            </ul>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3 text-xs">
-                {/* Creation Fee 3.5% */}
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                  <div className="text-slate-400 font-medium">1. ค่าเปิดทริปคุ้มครองระบบ (3.5%):</div>
-                  <div className="text-base font-bold font-mono text-white mt-1">
-                    ฿{Math.round(heroTrip.totalSlots * heroTrip.costPerPerson * 0.035).toLocaleString()} บาท
-                  </div>
-                  <div className="text-[11px] text-slate-400 mt-1">
-                    (สมาชิก Platinum Tier ได้สิทธิ์ลดหย่อน 100% ฟรีค่าธรรมเนียม)
-                  </div>
-                </div>
+            {/* Fee receipt */}
+            <div className="mt-auto pt-7">
+              <h4 className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+                <Coins className="w-4 h-4 text-amber-600" />
+                ค่าธรรมเนียมและค่าปรับ
+              </h4>
+              <table className="mt-2 w-full text-sm">
+                <tbody className="divide-y divide-slate-100">
+                  <tr>
+                    <td className="py-2 text-slate-600">ค่าเปิดทริป 3.5%</td>
+                    <td className="py-2 text-right font-mono text-slate-900">฿{creationFee.toLocaleString()}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 text-slate-600">ค่าปรับเททริป 10% ของมัดจำ</td>
+                    <td className="py-2 text-right font-mono text-rose-600">฿{penalty.toLocaleString()}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1.5 pl-4 text-xs text-slate-500">เข้าแพลตฟอร์ม 5%</td>
+                    <td className="py-1.5 text-right font-mono text-xs text-slate-500">฿{Math.round(penalty / 2).toLocaleString()}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1.5 pl-4 text-xs text-slate-500">ชดเชยเพื่อนในกลุ่ม 5%</td>
+                    <td className="py-1.5 text-right font-mono text-xs text-slate-500">฿{Math.round(penalty / 2).toLocaleString()}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p className="mt-2 text-xs text-slate-500">สมาชิก PLATINUM ไม่เสียค่าเปิดทริป</p>
+            </div>
+          </div>
 
-                {/* 10% Cancellation Penalty Split */}
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                  <div className="text-amber-300 font-medium">2. ค่าปรับหากมีคนเททริป (10% จากมัดจำ):</div>
-                  <div className="text-base font-bold font-mono text-amber-400 mt-1">
-                    หัก 150 บาท / ครั้ง
-                  </div>
-                  <div className="text-[11px] text-slate-300 mt-1 flex flex-col space-y-0.5">
-                    <span>• <strong>5% (75 THB)</strong>: เข้า Platform Revenue</span>
-                    <span>• <strong>5% (75 THB)</strong>: ชดเชยกองกลางเพื่อนในกลุ่ม (~15 บ./คน)</span>
-                  </div>
-                </div>
-              </div>
+          {/* Stub: the money and the action */}
+          <div className="ticket-stub p-6 sm:p-7 flex flex-col bg-slate-50">
+            <div className="flex items-baseline justify-between gap-2 pb-4 mb-4 border-b border-dashed border-slate-300">
+              <span className="text-xs font-medium text-slate-600">ตั๋วมัดจำ</span>
+              <span className="font-mono text-xs tracking-wider text-slate-500">{ticketNumber(heroTrip.id)}</span>
+            </div>
+            <div className="text-xs text-slate-500">เงินมัดจำ Escrow ต่อคน</div>
+            <div className="mt-1 flex items-center gap-2 font-mono text-[2.1rem] leading-none font-semibold text-emerald-700">
+              <ShieldCheck className="w-7 h-7" />฿{heroTrip.securityDepositPerPerson.toLocaleString()}
+            </div>
+            <p className="mt-2 text-xs text-slate-500 leading-relaxed">คืนเต็มจำนวนเมื่อมาตามนัด</p>
+
+            <div className="mt-6 pt-5 border-t border-slate-200">
+              <div className="text-xs text-slate-500">กองกลางที่ล็อกไว้</div>
+              <div className="mt-1 font-mono text-xl font-semibold text-slate-900">฿{heroTrip.tripPoolBalance.toLocaleString()}</div>
             </div>
 
-            {/* INTERACTIVE HACKATHON DEMO BUTTONS */}
-            <div className="pt-2 flex flex-col sm:flex-row gap-3">
-              {/* Button 1: Join Trip & Pay Deposit */}
+            <div className="mt-auto pt-8 space-y-2.5">
               <button
                 onClick={() => handleJoin(heroTrip)}
                 onAnimationEnd={stopShake}
-                disabled={heroTrip.joinedSlots >= heroTrip.totalSlots}
-                className={`${shakingTripId === heroTrip.id ? 'animate-shake' : ''} flex-1 py-3.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg shadow-emerald-600/20 flex items-center justify-center space-x-2 transition-all transform hover:-translate-y-0.5 disabled:opacity-50`}
+                disabled={heroFull}
+                className={`${shakingTripId === heroTrip.id ? 'animate-shake' : ''} w-full h-12 px-4 rounded-md font-semibold text-sm flex items-center justify-center gap-2 transition-colors ${
+                  heroFull ? 'border border-slate-300 text-slate-500 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                }`}
               >
-                <ShieldCheck className="w-5 h-5" />
-                <span>เข้าร่วมทริป & วางเงินมัดจำ ฿{heroTrip.securityDepositPerPerson.toLocaleString()}</span>
+                <ShieldCheck className="w-[18px] h-[18px]" />
+                {heroFull ? 'ทริปเต็มแล้ว' : `เข้าร่วม & วางมัดจำ ฿${heroTrip.securityDepositPerPerson.toLocaleString()}`}
               </button>
-
-              {/* Button 2: Simulate Member Flake */}
               <button
                 onClick={handleFlakeClick}
-                className="flex-1 py-3.5 px-5 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 text-white font-bold text-sm shadow-lg shadow-rose-600/20 flex items-center justify-center space-x-2 transition-all transform hover:-translate-y-0.5"
+                className="w-full h-10 px-4 rounded-md border border-rose-300 text-rose-700 hover:bg-rose-50 font-semibold text-sm flex items-center justify-center gap-2 transition-colors"
               >
-                <AlertTriangle className="w-5 h-5 text-amber-200" />
-                <span>🚨 จำลองการเททริป (หักค่าปรับ 10%)</span>
+                <AlertTriangle className="w-4 h-4" />
+                จำลองการเททริป
               </button>
+              <p className="text-center text-[11px] text-slate-500">ปุ่มจำลองสำหรับสาธิต หักค่าปรับ 10% จากสมาชิก 1 คน</p>
             </div>
-
           </div>
-
         </div>
 
-        {/* PARTICIPANTS LIST ROW */}
-        <div className="p-6 sm:p-8 bg-slate-50 border-t border-slate-200">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-sm font-bold text-slate-800 flex items-center space-x-2">
-              <Users className="w-4 h-4 text-indigo-600" />
-              <span>รายชื่อสมาชิกที่วางเงินค้ำประกันแล้ว ({heroTrip.participants.length} คน)</span>
+        {/* Roster */}
+        <div className="border-t border-slate-200 px-6 sm:px-7 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-4">
+            <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <Users className="w-4 h-4 text-slate-500" />
+              สมาชิกที่วางเงินค้ำประกันแล้ว {heroTrip.participants.length} คน
             </h4>
-            <span className="text-xs text-slate-500">
-              สถานะเงินมัดจำถูกล็อกอย่างปลอดภัยผ่านระบบ Escrow
-            </span>
+            <span className="text-xs text-slate-500">เงินมัดจำทุกก้อนถูกล็อกไว้ใน Escrow จนถึงวันเดินทาง · รายชื่อเป็นข้อมูลตัวอย่างสำหรับสาธิต</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-8 border-t border-slate-100">
             {heroTrip.participants.map((p) => {
               const isPenalized = p.escrowStatus === 'PENALIZED_CANCEL';
               return (
-                <div
+                <li
                   key={p.id}
-                  className={`p-3.5 rounded-2xl border transition-all flex items-center space-x-3 ${
-                    p.joinedAt === 'เพิ่งเข้าร่วม' ? 'animate-popIn' : ''
-                  } ${
-                    isPenalized
-                      ? 'bg-rose-50 border-rose-300 ring-2 ring-rose-400/20'
-                      : 'bg-white border-slate-200'
-                  }`}
+                  className={`flex items-center gap-3 py-3 border-b border-slate-100 ${p.joinedAt === 'เพิ่งเข้าร่วม' ? 'animate-fadeIn' : ''}`}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={p.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.nickname || p.fullName)}&background=e0e7ff&color=4338ca`}
-                    alt={p.fullName}
-                    className="w-10 h-10 rounded-full object-cover shrink-0 border border-slate-200"
+                    src={p.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.nickname || p.fullName)}&background=dce4ef&color=2a4165`}
+                    alt=""
+                    className={`w-10 h-10 rounded-full object-cover shrink-0 ${isPenalized ? 'grayscale opacity-70' : ''}`}
                   />
-                  <div className="text-xs min-w-0 flex-1">
-                    <div className="font-bold text-slate-900 truncate">{p.fullName}</div>
-                    {p.nickname && (
-                      <div className="text-slate-500 truncate">ชื่อเล่น: {p.nickname}</div>
-                    )}
-                    <div className="flex items-center space-x-2 mt-0.5">
-                      <span className="font-semibold text-emerald-600">
-                        Trust {p.trustScore}%
-                      </span>
-                      <span className="text-slate-400">•</span>
-                      <span className="text-slate-500">{p.attendanceRate}% เข้าร่วม</span>
+                  <div className="min-w-0 flex-1 text-sm">
+                    <div className={`font-medium truncate ${isPenalized ? 'text-slate-500 line-through decoration-rose-400' : 'text-slate-900'}`}>
+                      {p.fullName}
+                      {p.nickname && <span className="font-normal text-slate-500"> ({p.nickname})</span>}
                     </div>
-                    {isPenalized ? (
-                      <div className="text-[10px] font-bold text-rose-600 mt-1 bg-rose-100 px-1.5 py-0.5 rounded">
-                        ⚠️ โดนหักค่าปรับ 10% (150 บ.)
-                      </div>
-                    ) : (
-                      <div className="text-[10px] font-semibold text-indigo-600 mt-1">
-                        🔒 ล็อกมัดจำ ฿{p.depositPaid.toLocaleString()}
-                      </div>
-                    )}
+                    <div className="text-xs text-slate-500">
+                      Trust {p.trustScore}% · มาตามนัด {p.attendanceRate}%
+                    </div>
                   </div>
-                </div>
+                  {isPenalized ? (
+                    <span className="shrink-0 text-xs font-semibold text-rose-600">หัก ฿{Math.round(p.depositPaid * 0.1)}</span>
+                  ) : (
+                    <span className="shrink-0 inline-flex items-center gap-1 font-mono text-xs text-emerald-700">
+                      <Lock className="w-3 h-3" />฿{p.depositPaid.toLocaleString()}
+                    </span>
+                  )}
+                </li>
               );
             })}
-          </div>
+          </ul>
         </div>
+      </article>
 
-      </div>
-
-      {/* ADDITIONAL COMMUNITY TRIPS */}
-      <div className="pt-6">
-        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center space-x-2">
-          <span>ทริปชุมชนอื่นๆ ที่กำลังเปิดรับสมาชิก</span>
-          <span className="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-mono">
-            {allTrips.length}
-          </span>
+      {/* Other open trips */}
+      <section>
+        <h3 className="font-display text-2xl font-semibold text-slate-900">
+          ทริปอื่นที่เปิดรับสมาชิก <span className="font-sans text-base font-normal text-slate-500">{allTrips.length} ทริป</span>
         </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {allTrips.map((trip) => (
-            <div key={trip.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
-              <div>
-                <div className="relative h-44">
-                  <img
-                    src={trip.imageUrl}
-                    alt={trip.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-slate-900/80 text-white text-xs font-bold backdrop-blur-sm">
-                    {trip.joinedSlots} / {trip.totalSlots} คน
-                  </div>
-                  <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold">
-                    มัดจำ ฿{trip.securityDepositPerPerson.toLocaleString()}
-                  </div>
-                </div>
-
-                <div className="p-5">
-                  <div className="text-xs text-slate-500 flex items-center space-x-1 mb-1">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>{trip.travelDates}</span>
-                  </div>
-                  <h4 className="font-bold text-base text-slate-900 line-clamp-1">{trip.title}</h4>
-                  <div className="mt-3 space-y-1 text-xs text-slate-600">
-                    {trip.highlights.slice(0, 2).map((h, idx) => (
-                      <div key={idx} className="flex items-center space-x-1.5">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                        <span className="truncate">{h}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-5 pt-0 border-t border-slate-100 flex items-center justify-between mt-4">
-                <div>
-                  <div className="text-xs text-slate-400">ค่าทริปต่อคน</div>
-                  <div className="text-lg font-black font-mono text-slate-900">
-                    ฿{trip.costPerPerson.toLocaleString()}
-                  </div>
-                </div>
-
+            <TripTicket
+              key={trip.id}
+              trip={trip}
+              action={
                 <button
                   onClick={() => handleJoin(trip)}
                   onAnimationEnd={stopShake}
-                  className={`${shakingTripId === trip.id ? 'animate-shake' : ''} px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition-all`}
+                  className={`${shakingTripId === trip.id ? 'animate-shake' : ''} w-full h-10 rounded-md border border-emerald-600 text-emerald-700 hover:bg-emerald-600 hover:text-white font-semibold text-sm transition-colors`}
                 >
-                  เข้าร่วมทริป & ล็อกมัดจำ
+                  เข้าร่วม & ล็อกมัดจำ
                 </button>
-              </div>
-            </div>
+              }
+            />
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* BOTTOM CTA: start a new trip */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 text-white p-6 sm:p-8 shadow-xl">
-        <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-        <div className="absolute -bottom-20 -left-10 w-48 h-48 rounded-full bg-fuchsia-300/20 blur-2xl pointer-events-none" />
-        <div className="relative grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-6 items-center">
+      {/* Start a new trip */}
+      <section className="rounded-xl bg-ink-900 text-white p-6 sm:p-10">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-8 items-end">
           <div>
-            <div className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-white/15 border border-white/25">
-              <ShieldCheck className="w-3.5 h-3.5" /> คุ้มครองด้วย Smart Escrow
-            </div>
-            <h3 className="mt-3 text-2xl sm:text-3xl font-black leading-tight">เริ่มสร้างทริปใหม่ของคุณ</h3>
-            <p className="mt-1.5 text-sm text-white/85 max-w-xl">
-              ชวนเพื่อนไปเที่ยวโดยไม่ต้องกลัวโดนเท ทุกคนล็อกมัดจำไว้ในระบบ ใครเทโดนหักชดเชยให้เพื่อนในกลุ่ม
+            <h3 className="font-display text-3xl font-semibold">เปิดทริปของคุณเอง</h3>
+            <p className="mt-2 max-w-xl text-sm text-ink-200 leading-relaxed">
+              ตั้งปลายทาง วันเดินทาง และงบต่อคน แล้วชวนเพื่อนล็อกมัดจำไว้ใน Escrow จนถึงวันเดินทาง
+              ใครมาตามนัดได้เงินคืนเต็มพร้อมคะแนนความน่าเชื่อถือ ใครเทถูกหักชดเชยให้เพื่อนในกลุ่ม
             </p>
 
-            <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              {[
-                { icon: <PlusCircle className="w-4 h-4" />, title: '1. สร้างทริป', desc: 'ตั้งปลายทาง วันเดินทาง และงบต่อคน' },
-                { icon: <Users className="w-4 h-4" />, title: '2. เพื่อนล็อกมัดจำ', desc: 'เงินพักไว้ใน Escrow จนกว่าจะออกเดินทาง' },
-                { icon: <Award className="w-4 h-4" />, title: '3. เที่ยวจริง ได้เงินคืน', desc: 'มาตามนัดรับเงินคืนเต็ม พร้อมคะแนนความน่าเชื่อถือ' },
-              ].map((step) => (
-                <div key={step.title} className="rounded-2xl bg-white/10 border border-white/15 p-3 backdrop-blur-sm">
-                  <div className="font-bold text-sm flex items-center gap-1.5">
-                    {step.icon} {step.title}
-                  </div>
-                  <div className="mt-0.5 text-[11px] text-white/75 leading-snug">{step.desc}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] text-white/70 mr-1">ไอเดียเริ่มต้น:</span>
+            <div className="mt-6 flex flex-wrap items-center gap-2">
+              <span className="text-xs text-ink-300 mr-1">เริ่มจากไอเดีย</span>
               {[
                 { title: 'เชียงใหม่ ทะเลหมอก 3 วัน 2 คืน', destination: 'เชียงใหม่' },
                 { title: 'เกาะเสม็ด ชิลล์ริมทะเล', destination: 'เกาะเสม็ด จ.ระยอง' },
@@ -522,10 +410,8 @@ export const CommunityEscrowTab: React.FC<CommunityEscrowTabProps> = ({
               ].map((idea) => (
                 <button
                   key={idea.title}
-                  onClick={() => {
-                    openCreate({ title: idea.title, destination: idea.destination, places: [] });
-                  }}
-                  className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/15 hover:bg-white/30 border border-white/20 transition-colors"
+                  onClick={() => openCreate({ title: idea.title, destination: idea.destination, places: [] })}
+                  className="h-8 px-3 rounded-md text-xs font-medium border border-white/20 hover:bg-white/10 hover:border-white/40 transition-colors"
                 >
                   {idea.title}
                 </button>
@@ -533,19 +419,19 @@ export const CommunityEscrowTab: React.FC<CommunityEscrowTabProps> = ({
             </div>
           </div>
 
-          <div className="flex flex-col items-stretch lg:items-center gap-2">
+          <div className="flex flex-col items-stretch gap-2">
             <button
               onClick={() => openCreate()}
-              className="btn-shine px-7 h-14 rounded-2xl bg-white text-indigo-700 font-black text-base shadow-lg shadow-indigo-900/30 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 active:scale-[0.98]"
+              className="h-12 px-6 rounded-md bg-ink-50 hover:bg-ink-100 text-ink-900 font-semibold flex items-center justify-center gap-2 transition-colors"
             >
-              <PlusCircle className="w-5 h-5" />
-              สร้างทริปใหม่เลย
-              <ArrowRight className="w-5 h-5" />
+              <PlusCircle className="w-5 h-5 text-lagoon-600" />
+              สร้างทริปใหม่
+              <ArrowRight className="w-4 h-4" />
             </button>
-            <span className="text-[11px] text-white/75 text-center">ค่าธรรมเนียมแพลตฟอร์ม 3.5% • สมาชิก Gold/Platinum ได้ส่วนลด</span>
+            <span className="text-xs text-ink-300 text-center">ค่าธรรมเนียม 3.5% · GOLD และ PLATINUM ได้ส่วนลด</span>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* CREATE NEW TRIP: full-screen window */}
       <CreateTripWindow
@@ -557,7 +443,6 @@ export const CommunityEscrowTab: React.FC<CommunityEscrowTabProps> = ({
         onClose={() => setShowCreateModal(false)}
         onSubmit={handleCreateTrip}
       />
-
     </div>
   );
 };

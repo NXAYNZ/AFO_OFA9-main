@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { X, Compass, ShieldCheck, Sparkles, Users, Loader2, FlaskConical } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, ShieldCheck, Sparkles, Users, Loader2, FlaskConical } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -36,6 +36,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleGoogle = async () => {
@@ -51,36 +58,35 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-ink-950/70 animate-backdropIn"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-title"
+        className="relative w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden animate-popIn"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="relative px-8 pt-8 pb-6 bg-gradient-to-br from-emerald-600 via-teal-600 to-indigo-600 text-white">
+        <div className="relative px-8 pt-8">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-all hover:rotate-90"
+            className="absolute top-4 right-4 w-8 h-8 rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-900 flex items-center justify-center transition-colors"
             aria-label="ปิด"
           >
             <X className="w-4 h-4" />
           </button>
-          <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-4">
-            <Compass className="w-7 h-7" />
-          </div>
-          <h3 className="text-2xl font-extrabold">เข้าสู่ระบบ TripSure AI</h3>
-          <p className="text-sm text-white/80 mt-1">สมัครสมาชิกฟรีด้วยบัญชี Gmail ของคุณ ใช้เวลาไม่ถึง 1 นาที</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icon.png" alt="" className="w-11 h-11" />
+          <h3 id="auth-title" className="mt-4 font-display text-2xl font-semibold text-slate-900">เข้าสู่ระบบ TripSure</h3>
+          <p className="text-sm text-slate-600 mt-1">สมัครสมาชิกฟรีด้วยบัญชี Google ใช้เวลาไม่ถึง 1 นาที</p>
         </div>
 
-        <div className="px-8 py-6">
+        <div className="px-8 pt-6 pb-8">
           <ul className="space-y-2.5 mb-6">
             {PERKS.map(({ icon: Icon, text }) => (
               <li key={text} className="flex items-center gap-3 text-sm text-slate-700">
-                <span className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                  <Icon className="w-4 h-4" />
-                </span>
+                <Icon className="w-4 h-4 text-emerald-600 shrink-0" />
                 {text}
               </li>
             ))}
@@ -89,27 +95,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <button
             onClick={handleGoogle}
             disabled={!isSupabaseReady || isLoading}
-            className="group w-full h-12 flex items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white text-slate-800 font-semibold transition-all duration-200 hover:bg-slate-50 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+            className="w-full h-12 flex items-center justify-center gap-3 rounded-md border border-slate-300 bg-white text-slate-900 font-semibold transition-colors duration-150 hover:border-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-slate-500" /> : <GoogleLogo />}
             <span>{isLoading ? 'กำลังไปที่ Google...' : 'เข้าสู่ระบบด้วย Google'}</span>
           </button>
 
           {error && (
-            <p className="mt-3 text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
+            <p className="mt-3 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-md px-3 py-2" role="alert">
               เข้าสู่ระบบไม่สำเร็จ: {error}
             </p>
           )}
 
           {!isSupabaseReady && (
-            <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-3">
+            <div className="mt-4 rounded-md bg-amber-50 border border-amber-200 p-3">
               <p className="text-xs text-amber-800 leading-relaxed">
                 ยังไม่ได้ตั้งค่า Supabase (NEXT_PUBLIC_SUPABASE_URL / ANON_KEY ใน .env.local) จึงยังใช้ Google Sign-in ไม่ได้
                 ระหว่างนี้ลองสร้างโปรไฟล์แบบ Demo ได้ (ข้อมูลเก็บในเบราว์เซอร์นี้เท่านั้น)
               </p>
               <button
                 onClick={onDemoSignIn}
-                className="mt-2 w-full h-10 flex items-center justify-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold transition-all hover:-translate-y-0.5"
+                className="mt-2.5 w-full h-10 flex items-center justify-center gap-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors dark:bg-white dark:text-ink-900 dark:hover:bg-ink-100"
               >
                 <FlaskConical className="w-4 h-4" />
                 ทดลองสร้างโปรไฟล์แบบ Demo
@@ -117,7 +123,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           )}
 
-          <p className="mt-5 text-[11px] text-center text-slate-400 leading-relaxed">
+          <p className="mt-5 text-xs text-center text-slate-500 leading-relaxed">
             เราใช้เพียงชื่อ อีเมล และรูปโปรไฟล์จากบัญชี Google ของคุณ
           </p>
         </div>

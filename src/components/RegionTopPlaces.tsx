@@ -17,8 +17,8 @@ export interface TopPlace {
   photo?: string;
 }
 
-export const MEDALS = ['🥇', '🥈', '🥉'];
-export const RANK_COLORS = ['#f59e0b', '#94a3b8', '#b45309'];
+// Gold, silver, bronze for the region's top three
+export const RANK_COLORS = ['#c27f1e', '#7d8590', '#855215'];
 
 /**
  * Top 3 attractions of a region.
@@ -98,24 +98,24 @@ export const RegionTopPanel: React.FC<RegionTopPanelProps> = ({ region, top, sum
   const meta = REGION_META[region];
 
   return (
-    <div key={region} className="rounded-3xl bg-white border border-slate-200 shadow-sm overflow-hidden animate-fadeIn">
-      <div className="on-light px-5 pt-4 pb-3" style={{ backgroundColor: meta.fill }}>
+    <div key={region} className="rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden animate-fadeIn">
+      <div className="on-light px-5 pt-4 pb-4" style={{ backgroundColor: meta.fill }}>
         <button
           onClick={onBack}
-          className="h-8 pl-2 pr-3 -ml-1 rounded-lg text-xs font-bold text-slate-700 bg-white/70 hover:bg-white flex items-center gap-1 transition-colors"
+          className="h-8 pl-1.5 pr-2.5 -ml-1.5 rounded-md text-xs font-semibold text-slate-700 hover:bg-black/5 flex items-center gap-1 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> กลับไปดูทั้งประเทศ
+          <ArrowLeft className="w-4 h-4" /> ดูทั้งประเทศ
         </button>
-        <h3 className="mt-2.5 text-base font-black text-slate-900 flex items-center gap-1.5">
-          <Flame className="w-5 h-5 text-orange-500" />
-          3 อันดับที่คึกคักและน่าไปที่สุด
+        <h3 className="mt-2 font-display text-xl font-semibold text-slate-900 flex items-center gap-1.5">
+          <Flame className="w-5 h-5 text-orange-600" />
+          3 ที่น่าไปที่สุดวันนี้
         </h3>
-        <div className="text-xs text-slate-600">
-          {meta.emoji} {meta.label} • จังหวัดที่ติดอันดับมี <Crown className="inline w-3.5 h-3.5 text-amber-500" /> บนแผนที่
+        <div className="mt-0.5 text-xs text-slate-700">
+          {meta.label} · จังหวัดที่ติดอันดับมี <Crown className="inline w-3.5 h-3.5 text-amber-700" /> บนแผนที่
         </div>
       </div>
 
-      <div className="p-3 space-y-2.5">
+      <div className="divide-y divide-slate-100">
         {top.map((c, i) => {
           const s = summaries[c.key];
           const crowd = CROWD_LEVELS[levelOf(c.peak)];
@@ -123,10 +123,9 @@ export const RegionTopPanel: React.FC<RegionTopPanelProps> = ({ region, top, sum
             <button
               key={c.key}
               onClick={() => onOpen(c.province, c.place)}
-              className="group w-full flex text-left rounded-2xl overflow-hidden bg-white border-2 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
-              style={{ borderColor: `${RANK_COLORS[i]}66` }}
+              className="group w-full flex gap-3 text-left p-3 transition-colors hover:bg-slate-50"
             >
-              <div className="relative w-28 shrink-0 overflow-hidden bg-slate-200">
+              <div className="relative w-24 h-24 shrink-0 rounded-md overflow-hidden bg-slate-200">
                 {c.photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -134,51 +133,52 @@ export const RegionTopPanel: React.FC<RegionTopPanelProps> = ({ region, top, sum
                     alt={c.place}
                     loading="lazy"
                     onError={(e) => (e.currentTarget.style.display = 'none')}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 ) : (
-                  <div
-                    className="absolute inset-0 flex items-center justify-center text-4xl"
-                    style={{ background: `linear-gradient(135deg, ${meta.fill}, ${meta.hover})` }}
-                  >
-                    {CATEGORY_META[c.category].emoji}
+                  <div className="on-light absolute inset-0 flex items-end p-2" style={{ backgroundColor: meta.fill }}>
+                    <span className="font-display text-sm font-semibold leading-tight text-slate-800 line-clamp-3">{c.place}</span>
                   </div>
                 )}
-                <span className="absolute top-1 left-1 text-2xl drop-shadow">{MEDALS[i]}</span>
+                <span
+                  className="absolute top-1.5 left-1.5 w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center ring-2 ring-white"
+                  style={{ backgroundColor: RANK_COLORS[i] }}
+                  aria-label={`อันดับ ${i + 1}`}
+                >
+                  {i + 1}
+                </span>
               </div>
-              <div className="min-w-0 flex-1 p-2.5">
-                <div className="text-sm font-bold text-slate-800 truncate">{c.place}</div>
-                <div className="text-[11px] font-semibold flex items-center gap-1" style={{ color: RANK_COLORS[i] }}>
-                  <Crown className="w-3 h-3" /> จ.{c.province}
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold text-slate-900 truncate">{c.place}</div>
+                <div className="text-xs text-slate-500 flex items-center gap-1">
+                  จ.{c.province}
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-1">
                   <span
-                    className="text-[10px] font-bold px-1.5 py-0.5 rounded-md text-white"
+                    className="text-[11px] font-semibold px-1.5 py-0.5 rounded text-white"
                     style={{ backgroundColor: crowd.color }}
                     title="ช่วงที่คนเยอะที่สุดของวันนี้ (ประมาณการ)"
                   >
                     พีค: {crowd.label}
                   </span>
-                  <span className="text-[10px] text-slate-500">
-                    {CATEGORY_META[c.category].emoji} {CATEGORY_META[c.category].label}
-                  </span>
+                  <span className="text-[11px] text-slate-500">{CATEGORY_META[c.category].label}</span>
                 </div>
                 <div className="mt-1 flex items-center gap-1 text-xs">
                   {s ? (
                     <>
-                      <span className="font-black text-slate-900">{s.average.toFixed(1)}</span>
+                      <span className="font-semibold text-slate-900 tabular">{s.average.toFixed(1)}</span>
                       <span className="flex">
                         {[1, 2, 3, 4, 5].map((n) => (
                           <Star
                             key={n}
-                            className={`w-3 h-3 ${n <= Math.round(s.average) ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`}
+                            className={`w-3 h-3 ${n <= Math.round(s.average) ? 'fill-amber-500 text-amber-500' : 'text-slate-300'}`}
                           />
                         ))}
                       </span>
                       <span className="text-slate-500">({s.count})</span>
                     </>
                   ) : (
-                    <span className="text-[11px] text-slate-400">{loading ? 'กำลังโหลดรีวิว...' : 'ยังไม่มีรีวิว • เป็นคนแรก!'}</span>
+                    <span className="text-[11px] text-slate-500">{loading ? 'กำลังโหลดรีวิว' : 'ยังไม่มีรีวิว เป็นคนแรกที่รีวิว'}</span>
                   )}
                 </div>
                 {s?.latest && (
@@ -192,8 +192,8 @@ export const RegionTopPanel: React.FC<RegionTopPanelProps> = ({ region, top, sum
           );
         })}
       </div>
-      <p className="px-4 pb-4 text-[10px] text-slate-400 leading-relaxed">
-        จัดอันดับจากความคึกคักที่คาดการณ์ของวันนี้ ร่วมกับคะแนนรีวิวจากผู้ใช้ TripSure • คลิกเพื่อดูรายละเอียดและเขียนรีวิว
+      <p className="px-4 py-3 border-t border-slate-100 text-[11px] text-slate-500 leading-relaxed">
+        จัดอันดับจากความคึกคักที่คาดการณ์ของวันนี้ ร่วมกับคะแนนรีวิวจากผู้ใช้ TripSure · คลิกเพื่อดูรายละเอียดและเขียนรีวิว
       </p>
     </div>
   );

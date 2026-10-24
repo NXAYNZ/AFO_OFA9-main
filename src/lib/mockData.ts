@@ -200,7 +200,9 @@ export const ADDITIONAL_COMMUNITY_TRIPS: CommunityTrip[] = [
       '☕ ดริปกาแฟสดเด่นชัย-บ่อเกลือ ชมวิวนาข้าวสะปัน',
       '🚗 เหมารถตู้ VIP นำเที่ยวพร้อมคนขับท้องถิ่น',
     ],
-    imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80',
+    // Sea of mist at Doi Samer Dao, Si Nan National Park (Wikimedia Commons, Kris4to, CC BY-SA 4.0)
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Morning_sea_of_mist%2C_Doi_Samer_Dao%2C_Si_Nan%2C_Nan%2C_Thailand.jpg/1280px-Morning_sea_of_mist%2C_Doi_Samer_Dao%2C_Si_Nan%2C_Nan%2C_Thailand.jpg',
+    imageCredit: 'ภาพ: Kris4to / Wikimedia Commons (CC BY-SA 4.0)',
     participants: [],
   },
   {

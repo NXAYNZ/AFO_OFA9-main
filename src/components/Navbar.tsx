@@ -2,10 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Compass,
   Crown,
-  Zap,
-  ArrowUpRight,
   Menu,
   Search,
   X,
@@ -27,9 +24,11 @@ import {
   Sun,
   Moon,
   Settings,
+  Gem,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { SubscriptionTier, TIER_CONFIGS } from '@/lib/types';
+import { BrandMark } from '@/components/Sidebar';
 
 interface SearchItem {
   label: string;
@@ -121,19 +120,15 @@ const NavSearch: React.FC<NavSearchProps> = ({ setActiveTab, onOpenUpgradeModal 
   };
 
   return (
-    <div ref={wrapperRef} className="relative hidden md:block">
+    <div ref={wrapperRef} className="relative hidden md:block w-full max-w-md">
       <div
-        className={`group flex items-center gap-2 h-10 px-3 rounded-xl border transition-all duration-300 ${
+        className={`group flex items-center gap-2 h-10 px-3 rounded-md border transition-colors duration-150 ${
           isOpen
-            ? 'w-72 lg:w-80 xl:w-96 bg-white border-emerald-400 ring-4 ring-emerald-500/15 shadow-md'
-            : 'w-56 lg:w-64 xl:w-80 bg-slate-100/80 border-slate-200 hover:bg-white hover:border-slate-300 hover:shadow-sm'
+            ? 'bg-white border-emerald-500 ring-2 ring-emerald-500/20'
+            : 'bg-white border-slate-200 hover:border-slate-300'
         }`}
       >
-        <Search
-          className={`w-4 h-4 shrink-0 transition-all duration-300 ${
-            isOpen ? 'text-emerald-600 scale-110' : 'text-slate-400 group-hover:text-slate-600'
-          }`}
-        />
+        <Search className={`w-4 h-4 shrink-0 ${isOpen ? 'text-emerald-600' : 'text-slate-400'}`} />
         <input
           ref={inputRef}
           type="text"
@@ -145,8 +140,8 @@ const NavSearch: React.FC<NavSearchProps> = ({ setActiveTab, onOpenUpgradeModal 
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="ค้นหาทริป, โรงแรม, ฟีเจอร์..."
-          className="flex-1 min-w-0 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
+          placeholder="ค้นหาทริป โรงแรม หรือเมนู"
+          className="flex-1 min-w-0 bg-transparent text-sm text-slate-800 outline-none"
           aria-label="ค้นหา"
         />
         {query ? (
@@ -155,13 +150,13 @@ const NavSearch: React.FC<NavSearchProps> = ({ setActiveTab, onOpenUpgradeModal 
               setQuery('');
               inputRef.current?.focus();
             }}
-            className="p-0.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all hover:rotate-90"
+            className="p-0.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
             aria-label="ล้างคำค้นหา"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         ) : (
-          <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 rounded-md border border-slate-200 bg-white text-[10px] font-semibold text-slate-400">
+          <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 rounded border border-slate-200 text-[11px] font-medium text-slate-500">
             Ctrl K
           </kbd>
         )}
@@ -169,12 +164,12 @@ const NavSearch: React.FC<NavSearchProps> = ({ setActiveTab, onOpenUpgradeModal 
 
       {/* Results dropdown */}
       <div
-        className={`absolute left-0 top-full mt-2 w-full min-w-[18rem] bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden origin-top transition-all duration-200 ${
-          isOpen ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
+        className={`absolute left-0 top-full mt-1.5 w-full min-w-[18rem] bg-white rounded-lg border border-slate-200 shadow-xl overflow-hidden origin-top transition-[opacity,transform] duration-150 ${
+          isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none'
         }`}
       >
-        <div className="px-4 pt-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-          {q ? `ผลการค้นหา (${results.length})` : 'เมนูแนะนำ'}
+        <div className="px-4 pt-3 pb-1.5 text-xs font-medium text-slate-500">
+          {q ? `ผลการค้นหา ${results.length} รายการ` : 'ไปที่'}
         </div>
         {results.length === 0 ? (
           <div className="px-4 pb-4 pt-1 text-sm text-slate-500">
@@ -190,27 +185,17 @@ const NavSearch: React.FC<NavSearchProps> = ({ setActiveTab, onOpenUpgradeModal 
                   <button
                     onMouseEnter={() => setHighlighted(i)}
                     onClick={() => selectItem(item)}
-                    className={`group w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                      isHighlighted ? 'bg-emerald-50' : ''
+                    className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
+                      isHighlighted ? 'bg-slate-100' : ''
                     }`}
                   >
-                    <span
-                      className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                        isHighlighted ? 'bg-emerald-600 text-white scale-110' : 'bg-slate-100 text-slate-500'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                    </span>
+                    <Icon className={`w-4 h-4 shrink-0 ${isHighlighted ? 'text-emerald-600' : 'text-slate-400'}`} />
                     <span className="flex-1 min-w-0">
-                      <span className={`block text-sm font-semibold truncate ${isHighlighted ? 'text-emerald-800' : 'text-slate-800'}`}>
-                        {item.label}
-                      </span>
+                      <span className="block text-sm font-medium truncate text-slate-900">{item.label}</span>
                       <span className="block text-xs text-slate-500 truncate">{item.description}</span>
                     </span>
                     <CornerDownLeft
-                      className={`w-3.5 h-3.5 text-emerald-600 transition-all duration-200 ${
-                        isHighlighted ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-1'
-                      }`}
+                      className={`w-3.5 h-3.5 text-slate-400 ${isHighlighted ? 'opacity-100' : 'opacity-0'}`}
                     />
                   </button>
                 </li>
@@ -221,6 +206,24 @@ const NavSearch: React.FC<NavSearchProps> = ({ setActiveTab, onOpenUpgradeModal 
       </div>
     </div>
   );
+};
+
+// Each tier looks like its rank when selected: plain ink, gold with a crown, navy and silver with a gem
+const TIER_SWITCH_STYLE: Record<SubscriptionTier, { active: string; idle: string; icon?: LucideIcon }> = {
+  FREE: {
+    active: 'bg-ink-600 text-white',
+    idle: 'text-slate-500 hover:text-slate-900',
+  },
+  GOLD: {
+    active: 'bg-saffron-400 text-saffron-950 shadow-sm',
+    idle: 'text-saffron-700 hover:bg-saffron-50 dark:text-saffron-300',
+    icon: Crown,
+  },
+  PLATINUM: {
+    active: 'bg-ink-900 text-gulf-100 ring-1 ring-inset ring-gulf-300/60 shadow-sm',
+    idle: 'text-gulf-600 hover:bg-gulf-50 dark:text-gulf-300',
+    icon: Gem,
+  },
 };
 
 // Signed-in member shown in the navbar (null = signed out)
@@ -261,9 +264,9 @@ const UserMenu: React.FC<UserMenuProps> = ({ member, onSignIn, onEditProfile, on
     return (
       <button
         onClick={onSignIn}
-        className="group h-10 px-3 sm:px-4 rounded-xl border border-slate-300 bg-white text-sm font-semibold text-slate-700 flex items-center gap-2 whitespace-nowrap transition-all duration-200 hover:border-emerald-400 hover:text-emerald-700 hover:shadow-md hover:-translate-y-0.5"
+        className="h-10 px-3 sm:px-4 rounded-md bg-slate-900 text-sm font-semibold text-white flex items-center gap-2 whitespace-nowrap transition-colors duration-150 hover:bg-slate-800 dark:bg-white dark:text-ink-900 dark:hover:bg-ink-100"
       >
-        <LogIn className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+        <LogIn className="w-4 h-4" />
         <span className="hidden sm:inline">เข้าสู่ระบบ</span>
       </button>
     );
@@ -275,8 +278,9 @@ const UserMenu: React.FC<UserMenuProps> = ({ member, onSignIn, onEditProfile, on
     <div ref={wrapperRef} className="relative">
       <button
         onClick={() => setIsOpen((prev) => !prev)}
-        className="group flex items-center gap-1.5 p-1 pr-2 rounded-xl border border-slate-200 bg-white transition-all duration-200 hover:shadow-md hover:border-emerald-300"
+        className="flex items-center gap-1.5 p-1 pr-2 rounded-md border border-slate-200 bg-white transition-colors duration-150 hover:border-slate-300"
         aria-label="เมนูบัญชี"
+        aria-expanded={isOpen}
       >
         <span className="relative">
           {member.avatarUrl && !avatarBroken ? (
@@ -286,10 +290,10 @@ const UserMenu: React.FC<UserMenuProps> = ({ member, onSignIn, onEditProfile, on
               alt=""
               referrerPolicy="no-referrer"
               onError={() => setAvatarBroken(true)}
-              className="w-8 h-8 rounded-lg object-cover transition-transform duration-200 group-hover:scale-105"
+              className="w-8 h-8 rounded object-cover"
             />
           ) : (
-            <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-indigo-600 text-white text-sm font-bold flex items-center justify-center">
+            <span className="w-8 h-8 rounded bg-ink-900 text-white text-sm font-semibold flex items-center justify-center">
               {initial}
             </span>
           )}
@@ -297,19 +301,19 @@ const UserMenu: React.FC<UserMenuProps> = ({ member, onSignIn, onEditProfile, on
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-white" />
           )}
         </span>
-        <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       <div
-        className={`absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden origin-top-right transition-all duration-200 ${
-          isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+        className={`absolute right-0 top-full mt-1.5 w-64 bg-white rounded-lg border border-slate-200 shadow-xl overflow-hidden origin-top-right transition-[opacity,transform] duration-150 ${
+          isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none'
         }`}
       >
         <div className="px-4 py-3 border-b border-slate-100">
-          <div className="text-sm font-bold text-slate-900 truncate">{member.displayName || 'สมาชิกใหม่'}</div>
+          <div className="text-sm font-semibold text-slate-900 truncate">{member.displayName || 'สมาชิกใหม่'}</div>
           <div className="text-xs text-slate-500 truncate">{member.email}</div>
           {member.isDemo && (
-            <span className="mt-1.5 inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+            <span className="mt-1.5 inline-block text-[11px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
               โหมด Demo
             </span>
           )}
@@ -319,9 +323,9 @@ const UserMenu: React.FC<UserMenuProps> = ({ member, onSignIn, onEditProfile, on
             setIsOpen(false);
             onEditProfile();
           }}
-          className="group w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition-colors"
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
         >
-          <UserPen className="w-4 h-4 text-slate-500 group-hover:text-emerald-600 transition-transform group-hover:scale-110" />
+          <UserPen className="w-4 h-4 text-slate-500" />
           {member.hasProfile ? 'แก้ไขโปรไฟล์' : 'สร้างโปรไฟล์'}
           {!member.hasProfile && <span className="ml-auto w-2 h-2 rounded-full bg-rose-500" />}
         </button>
@@ -330,9 +334,9 @@ const UserMenu: React.FC<UserMenuProps> = ({ member, onSignIn, onEditProfile, on
             setIsOpen(false);
             onSignOut();
           }}
-          className="group w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition-colors border-t border-slate-100"
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition-colors border-t border-slate-100"
         >
-          <LogOut className="w-4 h-4 text-slate-500 group-hover:text-rose-600 transition-transform group-hover:translate-x-0.5" />
+          <LogOut className="w-4 h-4 text-slate-500" />
           ออกจากระบบ
         </button>
       </div>
@@ -378,143 +382,101 @@ export const Navbar: React.FC<NavbarProps> = ({
   const quotaPercent = unlimited ? 0 : Math.min(100, Math.round((aiQuotaUsed / tierConfig.maxQuotas) * 100));
 
   return (
-    <header className="sticky top-0 z-50 bg-white/85 backdrop-blur-lg border-b border-slate-200/80 shadow-sm">
-      <div className="px-3 sm:px-5">
-        <div className="flex items-center justify-between gap-4 h-16">
+    <header className="app-header sticky top-0 z-50 border-b border-slate-200">
+      <div className="flex items-center gap-3 h-16 px-3 sm:px-5 lg:px-6">
+        {/* Sidebar toggle: collapses the rail on desktop, opens the drawer on mobile */}
+        <button
+          onClick={onToggleSidebar}
+          className="p-2 -ml-1 rounded-md text-slate-600 hover:bg-slate-200/70 hover:text-slate-900 transition-colors"
+          aria-label="เปิด/ปิดเมนู"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
 
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            {/* Sidebar toggle (hamburger) */}
-            <button
-              onClick={onToggleSidebar}
-              className="group p-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 active:scale-90"
-              aria-label="เปิด/ปิดเมนู"
-            >
-              <Menu className="w-6 h-6 transition-transform duration-300 group-hover:scale-110" />
-            </button>
+        {/* Brand appears here only when the rail is hidden */}
+        <button type="button" className="lg:hidden min-w-0" onClick={() => setActiveTab('home')} aria-label="TripSure หน้าหลัก">
+          <span className="hidden sm:block"><BrandMark onDark={false} /></span>
+          <span className="sm:hidden"><BrandMark compact onDark={false} /></span>
+        </button>
 
-            {/* Logo & Platform Tag */}
-            <button
-              type="button"
-              className="group flex items-center gap-3 text-left shrink-0"
-              onClick={() => setActiveTab('home')}
-            >
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 group-hover:shadow-xl group-hover:shadow-emerald-500/40">
-                <Compass className="w-6 h-6 transition-transform duration-700 group-hover:rotate-[360deg]" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-emerald-700 via-teal-700 to-indigo-700 dark:from-emerald-400 dark:via-teal-300 dark:to-indigo-300 bg-clip-text text-transparent whitespace-nowrap">
-                    TripSure AI
-                  </span>
-                  <span className="hidden sm:inline text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 whitespace-nowrap transition-colors group-hover:bg-emerald-200">
-                    ทริปชัวร์
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 font-medium hidden xl:block whitespace-nowrap">
-                  Thailand&apos;s 1st Anti-Flake Trip Escrow & AI Planner
-                </p>
-              </div>
-            </button>
+        <div className="flex-1 min-w-0 flex">
+          <NavSearch setActiveTab={setActiveTab} onOpenUpgradeModal={onOpenUpgradeModal} />
+        </div>
 
-            {/* Search bar */}
-            <div className="ml-2 lg:ml-4">
-              <NavSearch setActiveTab={setActiveTab} onOpenUpgradeModal={onOpenUpgradeModal} />
-            </div>
-          </div>
-
-          {/* Right Controls: Tier Switcher & Live Quota Counter */}
-          <div className="flex items-center gap-3">
-
-            {/* Quick Live Tier Switcher for Hackathon Judges */}
-            <div className="hidden lg:flex items-center gap-1 bg-slate-50 border border-slate-200 p-1 rounded-xl transition-shadow hover:shadow-md">
-              <span className="text-xs font-medium text-slate-400 px-1.5">Tier:</span>
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Demo tier switch for judges: clearly marked as a simulation control */}
+          <div className="hidden xl:flex items-center gap-2" role="group" aria-label="สลับแพ็กเกจ (โหมดสาธิต)">
+            <span className="text-xs text-slate-500">Demo</span>
+            <div className="flex rounded-md border border-slate-200 bg-white p-0.5">
               {(['FREE', 'GOLD', 'PLATINUM'] as SubscriptionTier[]).map((tierKey) => {
                 const isActive = currentTier === tierKey;
+                const style = TIER_SWITCH_STYLE[tierKey];
+                const Icon = style.icon;
                 return (
                   <button
                     key={tierKey}
                     onClick={() => onTierChange(tierKey)}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 ${
-                      isActive
-                        ? tierKey === 'PLATINUM'
-                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30'
-                          : tierKey === 'GOLD'
-                          ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30'
-                          : 'bg-slate-700 text-white shadow-md shadow-slate-500/30'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
+                    aria-pressed={isActive}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold tracking-wide rounded transition-colors duration-150 ${
+                      isActive ? style.active : style.idle
                     }`}
                   >
+                    {Icon && <Icon className="w-3 h-3" strokeWidth={2.2} />}
                     {tierKey}
                   </button>
                 );
               })}
             </div>
-
-            {/* Quota Counter Widget */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl pl-3 pr-1.5 py-1.5 flex items-center gap-3 transition-all duration-200 hover:shadow-md hover:border-emerald-200">
-              <div className="text-left hidden sm:block">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 whitespace-nowrap">
-                  <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
-                  <span>โควตา AI</span>
-                  <span className={`font-mono font-bold ${!unlimited && quotaRemaining === 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                    {unlimited ? '∞ ไม่จำกัด' : `${quotaRemaining}/${tierConfig.maxQuotas}`}
-                  </span>
-                </div>
-                {/* Micro progress bar */}
-                <div className="w-24 bg-slate-200 rounded-full h-1.5 mt-1 overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      quotaPercent >= 100
-                        ? 'bg-rose-500'
-                        : quotaPercent >= 60
-                        ? 'bg-amber-500'
-                        : 'bg-emerald-500'
-                    }`}
-                    style={{ width: `${quotaPercent}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Upgrade Trigger Button */}
-              <button
-                onClick={onOpenUpgradeModal}
-                className="group btn-shine px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1 whitespace-nowrap transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/30 active:translate-y-0"
-                title="คลิกเพื่ออัปเกรดแพ็กเกจเพิ่มโควตา"
-              >
-                <Crown className="w-3.5 h-3.5 group-hover-wiggle" />
-                <span>อัปเกรด</span>
-                <ArrowUpRight className="w-3 h-3 hidden sm:inline transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </button>
-            </div>
-
-            {/* Theme quick toggle + settings */}
-            <div className="flex items-center gap-1">
-              <button
-                onClick={onToggleTheme}
-                className="group w-10 h-10 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 flex items-center justify-center transition-all active:scale-90"
-                aria-label={isDark ? 'เปลี่ยนเป็นโหมดสว่าง' : 'เปลี่ยนเป็นโหมดมืด'}
-                title={isDark ? 'โหมดสว่าง' : 'โหมดมืด'}
-              >
-                {isDark ? (
-                  <Sun className="w-5 h-5 text-amber-400 transition-transform duration-500 group-hover:rotate-90" />
-                ) : (
-                  <Moon className="w-5 h-5 transition-transform duration-500 group-hover:-rotate-12" />
-                )}
-              </button>
-              <button
-                onClick={onOpenSettings}
-                className="group hidden sm:flex w-10 h-10 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 items-center justify-center transition-all active:scale-90"
-                aria-label="ตั้งค่า"
-                title="ตั้งค่า"
-              >
-                <Settings className="w-5 h-5 transition-transform duration-500 group-hover:rotate-90" />
-              </button>
-            </div>
-
-            {/* Sign-in / Account menu */}
-            <UserMenu member={member} onSignIn={onSignIn} onEditProfile={onEditProfile} onSignOut={onSignOut} />
-
           </div>
+
+          {/* AI quota meter */}
+          <div className="flex items-center gap-3 rounded-md border border-slate-200 bg-white pl-3 pr-1 h-10">
+            <div className="hidden sm:block">
+              <div className="flex items-baseline gap-1.5 text-xs whitespace-nowrap">
+                <span className="text-slate-500">โควตา AI</span>
+                <span className={`font-mono font-semibold ${!unlimited && quotaRemaining === 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+                  {unlimited ? 'ไม่จำกัด' : `${quotaRemaining}/${tierConfig.maxQuotas}`}
+                </span>
+              </div>
+              <div className="w-20 bg-slate-200 rounded-full h-1 mt-1 overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-[width] duration-300 ${
+                    quotaPercent >= 100 ? 'bg-rose-500' : quotaPercent >= 60 ? 'bg-amber-500' : 'bg-emerald-500'
+                  }`}
+                  style={{ width: `${quotaPercent}%` }}
+                />
+              </div>
+            </div>
+            <button
+              onClick={onOpenUpgradeModal}
+              className="h-8 px-2.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1 whitespace-nowrap transition-colors duration-150"
+              title="อัปเกรดแพ็กเกจเพื่อเพิ่มโควตา"
+            >
+              <Crown className="w-3.5 h-3.5" />
+              <span>อัปเกรด</span>
+            </button>
+          </div>
+
+          <div className="flex items-center">
+            <button
+              onClick={onToggleTheme}
+              className="w-10 h-10 rounded-md text-slate-600 hover:bg-slate-200/70 hover:text-slate-900 flex items-center justify-center transition-colors"
+              aria-label={isDark ? 'เปลี่ยนเป็นโหมดสว่าง' : 'เปลี่ยนเป็นโหมดมืด'}
+              title={isDark ? 'โหมดสว่าง' : 'โหมดมืด'}
+            >
+              {isDark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
+            </button>
+            <button
+              onClick={onOpenSettings}
+              className="hidden sm:flex w-10 h-10 rounded-md text-slate-600 hover:bg-slate-200/70 hover:text-slate-900 items-center justify-center transition-colors"
+              aria-label="ตั้งค่า"
+              title="ตั้งค่า"
+            >
+              <Settings className="w-[18px] h-[18px]" />
+            </button>
+          </div>
+
+          <UserMenu member={member} onSignIn={onSignIn} onEditProfile={onEditProfile} onSignOut={onSignOut} />
         </div>
       </div>
     </header>

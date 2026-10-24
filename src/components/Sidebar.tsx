@@ -13,9 +13,8 @@ import {
   Crown,
   Settings,
   BadgeCheck,
-  Compass,
   X,
-  ArrowUpRight,
+  ArrowRight,
   Home,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -74,6 +73,24 @@ const SIDEBAR_GROUPS: { title: string; items: SidebarItem[] }[] = [
   },
 ];
 
+// Logo + wordmark, shared by the rail, the mobile drawer, and the mobile header
+export const BrandMark: React.FC<{ compact?: boolean; onDark?: boolean }> = ({ compact, onDark = true }) => (
+  <span className="flex items-center gap-2.5 min-w-0">
+    {/* eslint-disable-next-line @next/next/no-img-element */}
+    <img src="/icon.png" alt="" className="w-8 h-8 shrink-0" />
+    {!compact && (
+      <span className="min-w-0 leading-none">
+        <span className={`block font-display text-[1.35rem] font-semibold tracking-tight ${onDark ? 'text-white' : 'text-ink-900 dark:text-white'}`}>
+          TripSure
+        </span>
+        <span className={`block mt-1 text-[11px] font-medium ${onDark ? 'text-ink-300' : 'text-ink-500'}`}>
+          ทริปชัวร์ · วางแผนและค้ำประกันทริป
+        </span>
+      </span>
+    )}
+  </span>
+);
+
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   setActiveTab,
@@ -110,44 +127,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (!item.badge) return null;
     if (item.badge === 'live') {
       return (
-        <span className={`relative flex w-2 h-2 ${compact ? 'absolute top-2 right-3' : 'ml-auto'}`}>
-          <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
-          <span className="relative inline-flex w-2 h-2 rounded-full bg-emerald-500" />
-        </span>
+        <span
+          className={`w-1.5 h-1.5 rounded-full bg-lagoon-300 ${compact ? 'absolute top-2.5 right-4' : 'ml-auto'}`}
+          aria-label="เปิดรับสมาชิก"
+        />
       );
     }
     if (compact) return null;
     if (item.badge === 'new') {
-      return (
-        <span className="ml-auto text-[10px] font-bold leading-none px-1.5 py-1 rounded bg-rose-600 text-white">
-          New
-        </span>
-      );
+      return <span className="ml-auto text-[11px] font-semibold text-lagoon-300">ใหม่</span>;
     }
     if (item.badge === 'revenue') {
-      return (
-        <span className="ml-auto text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800">
-          ฿{totalRevenue.toLocaleString()}
-        </span>
-      );
+      return <span className="ml-auto text-xs font-mono text-saffron-200">฿{totalRevenue.toLocaleString()}</span>;
     }
-    return (
-      <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 group-hover:bg-amber-100 group-hover:text-amber-800 transition-colors">
-        {currentTier}
-      </span>
-    );
+    return <span className="ml-auto text-[11px] font-semibold tracking-wide text-ink-300">{currentTier}</span>;
   };
 
   const renderNav = (compact: boolean) => (
-    <nav className="py-3">
+    <nav className="flex-1 py-2" aria-label="เมนูหลัก">
       {SIDEBAR_GROUPS.map((group, groupIndex) => (
-        <div key={group.title} className={groupIndex > 0 ? 'mt-2 pt-2 border-t border-slate-200/80' : ''}>
-          {!compact && (
-            <div className="px-5 pt-1 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-              {group.title}
-            </div>
+        <div key={group.title} className={groupIndex > 0 ? 'mt-5' : ''}>
+          {!compact ? (
+            <div className="px-5 pb-1.5 text-xs font-medium text-ink-400">{group.title}</div>
+          ) : (
+            groupIndex > 0 && <div className="mx-5 mb-3 border-t border-white/10" />
           )}
-          <ul className="space-y-0.5 px-2">
+          <ul className="space-y-px px-3">
             {group.items.map((item) => {
               const isActive = !!item.primary && activeTab === item.tab;
               const Icon = item.icon;
@@ -156,30 +161,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <button
                     onClick={() => handleItemClick(item)}
                     title={compact ? item.label : undefined}
-                    className={`group relative w-full flex items-center gap-3 rounded-xl text-sm transition-all duration-200 ${
-                      compact ? 'justify-center px-0 py-3' : 'px-3 py-2.5'
+                    aria-current={isActive ? 'page' : undefined}
+                    className={`relative w-full flex items-center gap-3 rounded-md text-sm transition-colors duration-150 ${
+                      compact ? 'justify-center px-0 py-2.5' : 'px-2.5 py-2'
                     } ${
                       isActive
-                        ? 'bg-emerald-50 text-emerald-800 font-bold'
-                        : 'text-slate-700 font-medium hover:bg-slate-100 hover:text-slate-900'
+                        ? 'bg-lagoon-300/20 text-lagoon-50 font-semibold ring-1 ring-inset ring-lagoon-300/35'
+                        : 'text-ink-200 hover:bg-white/[0.06] hover:text-white active:bg-lagoon-300/15'
                     }`}
                   >
-                    {/* Active indicator bar */}
-                    <span
-                      className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 rounded-r-full bg-emerald-500 transition-all duration-300 ${
-                        isActive ? 'h-6 opacity-100' : 'h-0 opacity-0 group-hover:h-3 group-hover:opacity-60'
-                      }`}
-                    />
-                    <Icon
-                      className={`w-5 h-5 shrink-0 transition-all duration-300 group-hover:scale-110 ${
-                        isActive ? 'text-emerald-600' : 'text-slate-500 group-hover:text-emerald-600'
-                      } ${compact ? '' : 'group-hover:-rotate-6'}`}
-                    />
-                    {!compact && (
-                      <span className="truncate text-left transition-transform duration-200 group-hover:translate-x-0.5">
-                        {item.label}
-                      </span>
+                    {/* Light-green marker on the selected page */}
+                    {isActive && (
+                      <span aria-hidden className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r bg-lagoon-300" />
                     )}
+                    <Icon
+                      className={`w-[18px] h-[18px] shrink-0 ${isActive ? 'text-lagoon-200' : 'text-ink-400'}`}
+                      strokeWidth={isActive ? 2.2 : 1.8}
+                    />
+                    {!compact && <span className="truncate text-left">{item.label}</span>}
                     {renderBadge(item, compact)}
                   </button>
                 </li>
@@ -193,71 +192,78 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const tierConfig = TIER_CONFIGS[currentTier];
 
-  const upgradeCard = (
-    <div className="mx-3 mb-4 mt-2 p-4 rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-600 to-indigo-600 text-white shadow-lg shadow-emerald-500/20">
-      <div className="flex items-center gap-2 text-sm font-bold">
-        <Crown className="w-4 h-4" />
-        <span>สมาชิก {tierConfig.labelThai}</span>
+  const membership = (
+    <div className="mx-3 mb-4 mt-6 rounded-lg border border-white/10 p-4">
+      <div className="text-sm font-semibold text-white">
+        แพ็กเกจ <span className="tracking-wide text-saffron-300">{currentTier}</span>
       </div>
-      <p className="mt-1 text-xs text-white/80 leading-relaxed">
-        อัปเกรดเพื่อรับโควตา AI เพิ่มและส่วนลดค่าธรรมเนียมสร้างทริป
+      <p className="mt-1.5 text-[13px] leading-relaxed text-ink-200">
+        {currentTier === 'PLATINUM'
+          ? 'ใช้ AI ได้ไม่จำกัด และไม่มีค่าธรรมเนียมเปิดทริป'
+          : currentTier === 'GOLD'
+          ? `ลดค่าธรรมเนียมเปิดทริป ${tierConfig.creationFeeDiscountPercent}% · อัปเกรดเป็น PLATINUM เพื่อใช้ AI ไม่จำกัด`
+          : 'อัปเกรดเพื่อรับโควตา AI เพิ่ม และส่วนลดค่าธรรมเนียมเปิดทริป'}
       </p>
       <button
         onClick={() => {
           onOpenUpgradeModal();
           onCloseMobile();
         }}
-        className="group btn-shine mt-3 w-full py-2 rounded-lg bg-white/15 hover:bg-white/25 border border-white/25 text-xs font-bold flex items-center justify-center gap-1 transition-all duration-200 hover:-translate-y-0.5"
+        className="group mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-lagoon-200 hover:text-white transition-colors"
       >
-        <span>ดูแพ็กเกจ</span>
-        <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        ดูแพ็กเกจทั้งหมด
+        <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
       </button>
     </div>
   );
 
   return (
     <>
-      {/* Desktop sidebar */}
+      {/* Desktop rail */}
       <aside
-        className={`hidden lg:flex flex-col sticky top-16 h-[calc(100vh-4rem)] shrink-0 bg-white border-r border-slate-200 overflow-y-auto overflow-x-hidden no-scrollbar transition-[width] duration-300 ease-in-out ${
+        className={`hidden lg:block shrink-0 self-stretch bg-ink-900 border-r border-ink-950 transition-[width] duration-200 ease-out ${
           isCollapsed ? 'w-[72px]' : 'w-64'
         }`}
       >
+        <div className="sticky top-0 h-screen flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar">
+        <button
+          type="button"
+          onClick={() => setActiveTab('home')}
+          className={`flex items-center h-16 shrink-0 ${isCollapsed ? 'justify-center' : 'px-5'}`}
+          aria-label="TripSure หน้าหลัก"
+        >
+          <BrandMark compact={isCollapsed} />
+        </button>
         {renderNav(isCollapsed)}
-        {!isCollapsed && <div className="mt-auto">{upgradeCard}</div>}
+        {!isCollapsed && membership}
+        </div>
       </aside>
 
       {/* Mobile drawer */}
       <div
-        className={`lg:hidden fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`lg:hidden fixed inset-0 z-[60] bg-ink-950/50 transition-opacity duration-200 ${
           isMobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onCloseMobile}
       />
       <aside
-        className={`lg:hidden fixed top-0 left-0 z-[70] h-full w-72 max-w-[85vw] bg-white shadow-2xl flex flex-col overflow-y-auto transition-transform duration-300 ease-out ${
+        className={`lg:hidden fixed top-0 left-0 z-[70] h-full w-72 max-w-[85vw] bg-ink-900 shadow-2xl flex flex-col overflow-y-auto transition-transform duration-200 ease-out ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
+        aria-hidden={!isMobileOpen}
       >
-        <div className="flex items-center justify-between h-16 px-4 border-b border-slate-200 shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-indigo-600 flex items-center justify-center text-white">
-              <Compass className="w-5 h-5" />
-            </div>
-            <span className="font-extrabold text-lg bg-gradient-to-r from-emerald-700 via-teal-700 to-indigo-700 bg-clip-text text-transparent">
-              TripSure AI
-            </span>
-          </div>
+        <div className="flex items-center justify-between h-16 pl-5 pr-3 shrink-0">
+          <BrandMark />
           <button
             onClick={onCloseMobile}
-            className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-all hover:rotate-90"
+            className="p-2 rounded-md text-ink-300 hover:bg-white/10 hover:text-white transition-colors"
             aria-label="ปิดเมนู"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
         {renderNav(false)}
-        <div className="mt-auto">{upgradeCard}</div>
+        {membership}
       </aside>
     </>
   );

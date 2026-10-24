@@ -1,18 +1,30 @@
 'use client';
 
+import { Sun, Moon, CloudSun, CloudRain, CloudLightning, Wind } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { WeatherDay } from '@/lib/types';
 
 export type SceneKind = 'sunny' | 'night' | 'cloudy' | 'rain' | 'storm' | 'cold';
 
-// Background gradient per scene; white text stays readable on all of them
+// Flat sky colour per scene; white text stays readable on all of them
 export const SCENE_BACKGROUND: Record<SceneKind, string> = {
-  sunny: 'linear-gradient(160deg, #38bdf8 0%, #0ea5e9 45%, #2563eb 100%)',
-  night: 'linear-gradient(160deg, #1e1b4b 0%, #312e81 55%, #0f172a 100%)',
-  cloudy: 'linear-gradient(160deg, #64748b 0%, #0284c7 60%, #1e40af 100%)',
-  rain: 'linear-gradient(160deg, #475569 0%, #334155 55%, #1e293b 100%)',
-  storm: 'linear-gradient(160deg, #1e293b 0%, #1e1b4b 60%, #020617 100%)',
-  cold: 'linear-gradient(160deg, #7dd3fc 0%, #0ea5e9 50%, #4338ca 100%)',
+  sunny: '#3f5f8a',
+  night: '#13233a',
+  cloudy: '#4f5868',
+  rain: '#343e4f',
+  storm: '#1a2433',
+  cold: '#456590',
+};
+
+// Drawn icons for each sky, used in place of the forecast emoji
+export const SCENE_ICON: Record<SceneKind, LucideIcon> = {
+  sunny: Sun,
+  night: Moon,
+  cloudy: CloudSun,
+  rain: CloudRain,
+  storm: CloudLightning,
+  cold: Wind,
 };
 
 export const SCENE_LABEL: Record<SceneKind, string> = {
@@ -69,9 +81,11 @@ interface WeatherSceneProps {
   kind: SceneKind;
   // Increments on every tap of the card; replays the one-shot effect
   poke: number;
+  // Narrow cards keep clouds in the top-right corner, clear of the text
+  compact?: boolean;
 }
 
-export const WeatherScene: React.FC<WeatherSceneProps> = ({ kind, poke }) => {
+export const WeatherScene: React.FC<WeatherSceneProps> = ({ kind, poke, compact }) => {
   const drops = useMemo(() => {
     const rand = seeded(kind === 'storm' ? 7 : 3);
     const count = kind === 'storm' ? 90 : 45;
@@ -115,19 +129,19 @@ export const WeatherScene: React.FC<WeatherSceneProps> = ({ kind, poke }) => {
 
       {/* Sun with rotating rays; a tap makes it flare */}
       {showSun && (
-        <div className="absolute -top-6 -right-6 w-36 h-36" style={{ opacity: kind === 'cloudy' ? 0.75 : 1 }}>
+        <div className="absolute -top-10 -right-10 w-28 h-28" style={{ opacity: kind === 'cloudy' ? 0.6 : 0.85 }}>
           <div className="wx-sun-rays absolute inset-0 rounded-full" />
           <div key={`sun-${poke}`} className={`wx-sun absolute inset-8 rounded-full ${poke ? 'wx-sun-flare' : ''}`} />
         </div>
       )}
 
-      {/* Clouds */}
+      {/* Clouds drift through the right side only, fading out before the heading and reading */}
       {kind !== 'night' && (
-        <>
-          <Cloud top="8%" scale={kind === 'sunny' ? 0.7 : 1} duration={kind === 'storm' ? 22 : 38} delay={-6} opacity={0.85} dark={isWet} />
-          {kind !== 'sunny' && <Cloud top="30%" scale={0.8} duration={kind === 'storm' ? 18 : 30} delay={-20} opacity={0.6} dark={isWet} />}
-          {kind !== 'sunny' && kind !== 'cold' && <Cloud top="0%" scale={1.3} duration={kind === 'storm' ? 26 : 45} delay={-33} opacity={0.7} dark={isWet} />}
-        </>
+        <div className={`absolute right-0 [mask-image:linear-gradient(to_right,transparent,black_35%)] ${compact ? 'top-0 h-16 w-2/5' : 'inset-y-0 w-3/5'}`}>
+          <Cloud top="10%" scale={kind === 'sunny' ? 0.7 : 1} duration={kind === 'storm' ? 22 : 38} delay={-6} opacity={0.35} dark={isWet} />
+          {kind !== 'sunny' && <Cloud top="38%" scale={0.8} duration={kind === 'storm' ? 18 : 30} delay={-20} opacity={0.25} dark={isWet} />}
+          {kind !== 'sunny' && kind !== 'cold' && <Cloud top="0%" scale={1.2} duration={kind === 'storm' ? 26 : 45} delay={-33} opacity={0.3} dark={isWet} />}
+        </div>
       )}
       {kind === 'night' && <Cloud top="35%" scale={0.9} duration={50} delay={-15} opacity={0.15} />}
 
@@ -180,8 +194,6 @@ export const WeatherScene: React.FC<WeatherSceneProps> = ({ kind, poke }) => {
         </>
       )}
 
-      {/* Readability: darken the area behind the text */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/5 to-transparent" />
     </div>
   );
 };

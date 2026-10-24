@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { X, Loader2, Mail, MapPin, ShieldCheck, Trophy, CalendarCheck, Save, UserRound } from 'lucide-react';
+import { X, Loader2, Mail, MapPin, ShieldCheck, Trophy, CalendarCheck, Save, UserRound, Info, Check } from 'lucide-react';
 import { UserProfile } from '@/lib/types';
 import { ProfileFormData, TRAVEL_STYLE_OPTIONS } from '@/lib/auth';
+import { stripEmoji } from '@/lib/text';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -87,14 +88,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
   const initials = (form.nickname || form.fullName || email).trim().charAt(0).toUpperCase();
   const inputClass =
-    'w-full h-11 px-3.5 rounded-xl border border-slate-300 bg-white text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15';
+    'w-full h-11 px-3 rounded-md border border-slate-300 bg-white text-sm text-slate-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20';
   // Glow on required fields that are still empty (stops while typing in them)
   const needsFullName = requiredForJoin && !form.fullName.trim();
   const needsNickname = requiredForJoin && !form.nickname.trim();
   const attention = 'animate-attention focus:animate-none';
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-backdropIn">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-ink-950/70 animate-backdropIn">
       <div
         className={`w-full max-w-2xl ${isShaking ? 'animate-shake' : ''}`}
         onAnimationEnd={(e) => {
@@ -104,21 +105,24 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       <form
         onSubmit={handleSubmit}
         noValidate
-        className="relative w-full max-h-[90vh] overflow-y-auto bg-white rounded-3xl shadow-2xl border border-slate-200 animate-popIn"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="profile-title"
+        className="relative w-full max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-2xl animate-popIn"
       >
         {/* Cover + avatar */}
-        <div className="h-28 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 rounded-t-3xl" />
+        <div className="h-24 bg-ink-900 rounded-t-xl" />
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all hover:rotate-90"
+          className="absolute top-4 right-4 w-8 h-8 rounded-md text-white/80 hover:bg-white/10 hover:text-white flex items-center justify-center transition-colors"
           aria-label="ปิด"
         >
           <X className="w-4 h-4" />
         </button>
 
         <div className="px-6 sm:px-8 pb-8">
-          <div className="flex items-end gap-4 -mt-12">
+          <div className="flex items-end gap-4 -mt-10">
             {form.avatarUrl && !avatarBroken ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -126,15 +130,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 alt=""
                 referrerPolicy="no-referrer"
                 onError={() => setAvatarBroken(true)}
-                className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-lg bg-slate-100"
+                className="w-20 h-20 rounded-lg object-cover ring-4 ring-white bg-slate-100"
               />
             ) : (
-              <div className="w-24 h-24 rounded-2xl border-4 border-white shadow-lg bg-gradient-to-br from-emerald-500 to-indigo-600 flex items-center justify-center text-3xl font-extrabold text-white">
+              <div className="w-20 h-20 rounded-lg ring-4 ring-white bg-emerald-600 flex items-center justify-center font-display text-3xl font-semibold text-white">
                 {initials || <UserRound className="w-10 h-10" />}
               </div>
             )}
             <div className="pb-1 min-w-0">
-              <h3 className="text-xl font-extrabold text-slate-900">
+              <h3 id="profile-title" className="font-display text-2xl font-semibold text-slate-900">
                 {mode === 'create' ? 'สร้างโปรไฟล์ของคุณ' : 'แก้ไขโปรไฟล์'}
               </h3>
               <p className="text-xs text-slate-500 flex items-center gap-1 truncate">
@@ -145,43 +149,40 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           </div>
 
           {requiredForJoin ? (
-            <div className="mt-4 text-sm text-amber-900 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3 flex items-start gap-3 animate-fadeIn">
-              <span className="text-xl leading-none animate-nudge inline-block">👋</span>
+            <div className="mt-5 text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-md px-4 py-3 flex items-start gap-3 animate-fadeIn">
+              <Info className="w-4 h-4 mt-0.5 shrink-0 text-amber-700" />
               <span>
                 <strong>สร้างโปรไฟล์ก่อนเข้าร่วมทริป</strong> — กรอก <strong>ชื่อ-นามสกุล</strong> และ <strong>ชื่อเล่น</strong>{' '}
                 เพื่อแสดงในรายชื่อสมาชิกที่วางเงินค้ำประกัน
               </span>
             </div>
           ) : mode === 'create' && (
-            <p className="mt-4 text-sm text-slate-600 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
-              ยินดีต้อนรับ! กรอกข้อมูลสั้นๆ ให้เพื่อนร่วมทริปรู้จักคุณมากขึ้น (แก้ไขภายหลังได้เสมอ)
+            <p className="mt-5 text-sm text-slate-600">
+              ยินดีต้อนรับ กรอกข้อมูลสั้นๆ ให้เพื่อนร่วมทริปรู้จักคุณมากขึ้น (แก้ไขภายหลังได้เสมอ)
             </p>
           )}
 
           {/* Trust stats (edit mode) */}
           {mode === 'edit' && profile && (
-            <div className="mt-5 grid grid-cols-3 gap-3">
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 text-center">
-                <ShieldCheck className="w-4 h-4 mx-auto text-emerald-600" />
-                <div className="mt-1 text-lg font-extrabold text-slate-900">{profile.trustScore}</div>
-                <div className="text-[11px] text-slate-500">คะแนนความน่าเชื่อถือ</div>
+            <dl className="mt-6 grid grid-cols-3 border-y border-slate-200 divide-x divide-slate-200">
+              <div className="py-3 px-2 text-center">
+                <dd className="font-mono text-xl font-semibold text-slate-900">{profile.trustScore}</dd>
+                <dt className="mt-0.5 flex items-center justify-center gap-1 text-xs text-slate-500"><ShieldCheck className="w-3.5 h-3.5" /> ความน่าเชื่อถือ</dt>
               </div>
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 text-center">
-                <CalendarCheck className="w-4 h-4 mx-auto text-indigo-600" />
-                <div className="mt-1 text-lg font-extrabold text-slate-900">{profile.attendanceRate}%</div>
-                <div className="text-[11px] text-slate-500">อัตราการมาตามนัด</div>
+              <div className="py-3 px-2 text-center">
+                <dd className="font-mono text-xl font-semibold text-slate-900">{profile.attendanceRate}%</dd>
+                <dt className="mt-0.5 flex items-center justify-center gap-1 text-xs text-slate-500"><CalendarCheck className="w-3.5 h-3.5" /> มาตามนัด</dt>
               </div>
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 text-center">
-                <Trophy className="w-4 h-4 mx-auto text-amber-500" />
-                <div className="mt-1 text-lg font-extrabold text-slate-900">{profile.tripsCompleted}</div>
-                <div className="text-[11px] text-slate-500">ทริปที่ไปสำเร็จ</div>
+              <div className="py-3 px-2 text-center">
+                <dd className="font-mono text-xl font-semibold text-slate-900">{profile.tripsCompleted}</dd>
+                <dt className="mt-0.5 flex items-center justify-center gap-1 text-xs text-slate-500"><Trophy className="w-3.5 h-3.5" /> ทริปสำเร็จ</dt>
               </div>
-            </div>
+            </dl>
           )}
 
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="block">
-              <span className="text-xs font-semibold text-slate-700">
+              <span className="text-sm font-medium text-slate-700">
                 ชื่อ-นามสกุล <span className="text-rose-500">*</span>
               </span>
               <input
@@ -195,7 +196,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             </label>
 
             <label className="block">
-              <span className="text-xs font-semibold text-slate-700">
+              <span className="text-sm font-medium text-slate-700">
                 ชื่อเล่น {requiredForJoin && <span className="text-rose-500">*</span>}
               </span>
               <input
@@ -208,7 +209,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             </label>
 
             <label className="block sm:col-span-2">
-              <span className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+              <span className="text-sm font-medium text-slate-700 flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5" /> จังหวัดที่อยู่
               </span>
               <input
@@ -227,9 +228,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             </label>
 
             <label className="block sm:col-span-2">
-              <span className="text-xs font-semibold text-slate-700 flex justify-between">
+              <span className="text-sm font-medium text-slate-700 flex justify-between">
                 <span>แนะนำตัวสั้นๆ</span>
-                <span className="font-normal text-slate-400">
+                <span className="font-normal text-slate-500">
                   {form.bio.length}/{BIO_MAX}
                 </span>
               </span>
@@ -243,7 +244,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           </div>
 
           <div className="mt-5">
-            <span className="text-xs font-semibold text-slate-700">สไตล์การเที่ยว (เลือกได้หลายข้อ)</span>
+            <span className="text-sm font-medium text-slate-700">สไตล์การเที่ยว (เลือกได้หลายข้อ)</span>
             <div className="mt-2 flex flex-wrap gap-2">
               {TRAVEL_STYLE_OPTIONS.map((style) => {
                 const isSelected = form.travelStyles.includes(style);
@@ -252,13 +253,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     type="button"
                     key={style}
                     onClick={() => toggleStyle(style)}
-                    className={`px-3 py-1.5 rounded-full text-sm border transition-all duration-200 hover:-translate-y-0.5 active:scale-95 ${
+                    aria-pressed={isSelected}
+                    className={`h-9 px-3 rounded-md text-sm border inline-flex items-center gap-1.5 transition-colors duration-150 ${
                       isSelected
-                        ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-500/25'
-                        : 'bg-white border-slate-300 text-slate-700 hover:border-emerald-400 hover:text-emerald-700'
+                        ? 'bg-emerald-600 border-emerald-600 text-white'
+                        : 'bg-white border-slate-300 text-slate-700 hover:border-slate-500'
                     }`}
                   >
-                    {style}
+                    {isSelected && <Check className="w-3.5 h-3.5" />}
+                    {stripEmoji(style)}
                   </button>
                 );
               })}
@@ -266,21 +269,21 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           </div>
 
           {error && (
-            <p className="mt-5 text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5 animate-fadeIn">{error}</p>
+            <p className="mt-5 text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-md px-4 py-2.5 animate-fadeIn" role="alert">{error}</p>
           )}
 
           <div className="mt-7 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="h-11 px-5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+              className="h-11 px-5 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
             >
               {mode === 'create' ? 'ไว้ทีหลัง' : 'ยกเลิก'}
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="btn-shine h-11 px-6 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-md shadow-emerald-500/25 transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0"
+              className="h-11 px-6 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-60 disabled:hover:translate-y-0"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {mode === 'create' ? 'สร้างโปรไฟล์' : 'บันทึก'}

@@ -1,7 +1,22 @@
 import type { Metadata, Viewport } from 'next';
+import { Anuphan, Trirong } from 'next/font/google';
 import './globals.css';
 import './dark-theme.css';
 import { THEME_INIT_SCRIPT } from '@/lib/theme';
+
+// Anuphan carries the interface and data; Trirong (looped Thai serif) sets editorial headlines
+const uiFont = Anuphan({
+  subsets: ['thai', 'latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-ui',
+  display: 'swap',
+});
+const displayFont = Trirong({
+  subsets: ['thai', 'latin'],
+  weight: ['500', '600', '700'],
+  variable: '--font-display',
+  display: 'swap',
+});
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -30,11 +45,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="th" suppressHydrationWarning>
+    <html lang="th" suppressHydrationWarning className={`${uiFont.variable} ${displayFont.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body className="min-h-screen bg-slate-50 text-slate-900 selection:bg-emerald-500 selection:text-white">
+      <body className="min-h-screen bg-slate-50 text-slate-900">
         {children}
       </body>
     </html>

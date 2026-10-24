@@ -551,9 +551,24 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
-      
-      {/* Top Navbar */}
+    <div className="min-h-screen flex text-slate-900">
+
+      {/* Left navigation rail */}
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isCollapsed={isSidebarCollapsed}
+        isMobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        onOpenUpgradeModal={() => setIsUpgradeModalOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        currentTier={currentTier}
+        totalRevenue={revenueMetrics.totalRevenue}
+      />
+
+      <div className="flex-1 min-w-0 flex flex-col">
+
+      {/* Work bar */}
       <Navbar
         currentTier={currentTier}
         aiQuotaUsed={aiQuotaUsed}
@@ -570,24 +585,9 @@ export default function HomePage() {
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
-      <div className="flex">
+      <main className="flex-1 w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-20">
 
-      {/* Left Sidebar Menu */}
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        isCollapsed={isSidebarCollapsed}
-        isMobileOpen={isMobileSidebarOpen}
-        onCloseMobile={() => setIsMobileSidebarOpen(false)}
-        onOpenUpgradeModal={() => setIsUpgradeModalOpen(true)}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-        currentTier={currentTier}
-        totalRevenue={revenueMetrics.totalRevenue}
-      />
-
-      <main className="flex-1 min-w-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-
-        {/* Hero Pitch Banner (home page only) */}
+        {/* Opening spread (home page only) */}
         {activeTab === 'home' && (
           <HeroBanner
             currentTier={currentTier}
@@ -597,7 +597,7 @@ export default function HomePage() {
         )}
 
         {/* Tab Content Display */}
-        <div className={activeTab === 'home' ? 'mt-8' : 'mt-4'}>
+        <div className={activeTab === 'home' ? 'mt-10' : ''}>
           {activeTab === 'home' && (
             <HomeTab
               memberProfile={memberProfile}
@@ -704,6 +704,21 @@ export default function HomePage() {
 
       </main>
 
+      <footer className="border-t border-slate-200">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8 flex flex-col md:flex-row md:items-start md:justify-between gap-4 text-xs text-slate-500">
+          <div>
+            <div className="font-display text-base font-semibold text-slate-900">TripSure · ทริปชัวร์</div>
+            <p className="mt-1 max-w-md leading-relaxed">
+              วางแผนเที่ยวด้วย AI เทียบราคาที่พัก และล็อกเงินมัดจำกับระบบ Smart Escrow เพื่อให้ทุกคนในทริปมาจริง
+            </p>
+          </div>
+          <div className="md:text-right leading-relaxed">
+            <p>Hackathon project &ldquo;Make Me Money&rdquo; · Next.js, Gemini 2.5 Flash, Supabase, TMD / Open-Meteo</p>
+            <p className="mt-1 text-slate-400">ทำงานได้ทั้งโหมดข้อมูลจำลองและโหมดเชื่อมต่อ API จริง</p>
+          </div>
+        </div>
+      </footer>
+
       </div>
 
       {/* Subscription Paywall Modal */}
@@ -741,21 +756,6 @@ export default function HomePage() {
         onClose={() => setProfileModal((prev) => ({ ...prev, isOpen: false }))}
         onSave={handleSaveProfile}
       />
-
-      {/* Footer */}
-      <footer className="mt-20 border-t border-slate-200 bg-white py-10 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="font-bold text-slate-800 text-sm mb-1">
-            TripSure AI (ทริปชัวร์) — Thailand&apos;s 1st Anti-Flake Trip Escrow & AI Planner
-          </div>
-          <p>
-            Hackathon Project &ldquo;Make Me Money&rdquo; • Built with Next.js App Router, Tailwind CSS, Google Gemini 2.5 Flash, Supabase & TMD/Open-Meteo Weather APIs
-          </p>
-          <div className="mt-2 text-slate-400">
-            ระบบทำงานได้อย่างสมบูรณ์แบบทั้งโหมด Fallback ข้อมูลจำลองไทย และโหมดต่อ API จริง
-          </div>
-        </div>
-      </footer>
 
     </div>
   );

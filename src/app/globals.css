@@ -1,134 +1,174 @@
-@import url('https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Sarabun:wght@400;500;600;700;800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --font-prompt: 'Prompt', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --background: #f5f4f0;
+  --foreground: #13233a;
+  --surface: #ffffff;
+  --rule: #dddad1;
+  --accent: #1a7d71;
+  --focus: #1a7d71;
+  --ticket-notch: var(--background);
+}
+html.dark {
+  --background: #0a1422;
+  --foreground: #f1f2f0;
+  --surface: #101c2d;
+  --rule: #23344f;
+  --accent: #3b978a;
+  --focus: #6fb4a8;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: var(--font-prompt);
+  font-family: var(--font-ui), system-ui, sans-serif;
+  font-feature-settings: 'kern';
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Custom scrollbars */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
 
-/* Glassmorphism utilities */
+::selection { background: #a5d1c8; color: #0a1422; }
+html.dark ::selection { background: #126c61; color: #f8f7f4; }
+
+input, textarea, select { caret-color: var(--accent); }
+input::placeholder, textarea::placeholder { color: #8a8c91; opacity: 1; }
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+a { text-underline-offset: 3px; }
+
+/* Figures in data: the UI face with tabular numerals (font-mono maps here) */
+.font-mono, .tabular { font-variant-numeric: tabular-nums lining-nums; letter-spacing: 0; }
+
+/* Editorial headline voice */
+.font-display { font-feature-settings: 'kern'; letter-spacing: -0.01em; }
+
+/* Scrollbars themed from the palette */
+* { scrollbar-color: #c4c0b5 transparent; scrollbar-width: thin; }
+html.dark * { scrollbar-color: #2c3e5b transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #c4c0b5; border-radius: 10px; border: 3px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: #8f9196; background-clip: padding-box; border: 3px solid transparent; }
+
+/* Legacy surface helpers, now flat: one surface language across the app */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: var(--surface);
+  border: 1px solid var(--rule);
 }
-
 .glass-panel-dark {
-  background: rgba(15, 23, 42, 0.9);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(51, 65, 85, 0.7);
+  background: #13233a;
+  border: 1px solid #212c3d;
+}
+.gradient-brand { background: #1a7d71; }
+.gradient-card-subtle { background: var(--surface); }
+.gradient-fintech { background: #13233a; }
+
+/* Ticket: the signature for anything with money attached. A body and a stub split by a
+   perforated rule with half-circle notches cut from the page ground. */
+.ticket {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+}
+.ticket-perf {
+  position: relative;
+  border-top: 1.5px dashed var(--rule);
+}
+.ticket-perf::before,
+.ticket-perf::after {
+  content: '';
+  position: absolute;
+  top: -9px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ticket-notch);
+  border: 1px solid var(--rule);
+}
+.ticket-perf::before { left: -9px; clip-path: inset(0 0 0 50%); }
+.ticket-perf::after { right: -9px; clip-path: inset(0 50% 0 0); }
+/* Vertical perforation (stub on the right) */
+.ticket-perf-v {
+  position: relative;
+  border-left: 1.5px dashed var(--rule);
+}
+.ticket-perf-v::before,
+.ticket-perf-v::after {
+  content: '';
+  position: absolute;
+  left: -9px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ticket-notch);
+  border: 1px solid var(--rule);
+}
+.ticket-perf-v::before { top: -9px; clip-path: inset(50% 0 0 0); }
+.ticket-perf-v::after { bottom: -9px; clip-path: inset(0 0 50% 0); }
+/* Notches sit on a surface panel instead of the page ground */
+.on-surface { --ticket-notch: var(--surface); }
+
+/* Photo scrim for headlines set over destination photography */
+.photo-scrim {
+  background: linear-gradient(to top, rgb(10 20 34 / 0.9) 0%, rgb(10 20 34 / 0.7) 40%, rgb(10 20 34 / 0.25) 75%, rgb(10 20 34 / 0) 100%);
 }
 
-.gradient-brand {
-  background: linear-gradient(135deg, #059669 0%, #0d9488 50%, #4f46e5 100%);
+@media (max-width: 639px) {
+  .photo-scrim {
+    background: linear-gradient(to top, rgb(10 20 34 / 0.85) 0%, rgb(10 20 34 / 0.45) 45%, rgb(10 20 34 / 0) 75%);
+  }
 }
 
-.gradient-card-subtle {
-  background: linear-gradient(145deg, #ffffff 0%, #f0fdf4 100%);
-}
-
-.gradient-fintech {
-  background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
-}
-
-/* Animations */
+/* Skeleton loading */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
-
 .animate-shimmer {
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(90deg, rgb(255 255 255 / 0) 0%, rgb(255 255 255 / 0.35) 50%, rgb(255 255 255 / 0) 100%);
   background-size: 200% 100%;
-  animation: shimmer 2s infinite;
+  animation: shimmer 1.8s infinite;
 }
 
-/* Light sweep across a button on hover */
-.btn-shine {
-  position: relative;
-  overflow: hidden;
-}
-.btn-shine::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -75%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.45) 50%, rgba(255,255,255,0) 100%);
-  transform: skewX(-20deg);
-  pointer-events: none;
-}
-.btn-shine:hover::after {
-  animation: shine-sweep 0.8s ease-out;
-}
-@keyframes shine-sweep {
-  100% { left: 130%; }
-}
-
-@keyframes wiggle {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-12deg); }
-  75% { transform: rotate(12deg); }
-}
-.group:hover .group-hover-wiggle {
-  animation: wiggle 0.5s ease-in-out;
-}
+/* Retired flourishes kept as no-ops so older markup stays harmless */
+.btn-shine { position: relative; }
+.group-hover-wiggle { }
+.animate-nudge { }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(-4px); }
+  from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-fadeIn {
-  animation: fade-in 0.3s ease-out both;
+  animation: fade-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* Horizontal "no" shake, e.g. join blocked or required field missing */
 @keyframes shake-x {
   0%, 100% { transform: translateX(0); }
-  15%, 55% { transform: translateX(-8px); }
-  35%, 75% { transform: translateX(8px); }
-  90% { transform: translateX(-3px); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
 }
 .animate-shake {
-  animation: shake-x 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  animation: shake-x 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
-/* Modal entrance with a little overshoot */
+/* Dialog entrance: a short rise, no overshoot */
 @keyframes pop-in {
-  0% { opacity: 0; transform: scale(0.85) translateY(24px); }
-  60% { opacity: 1; transform: scale(1.03) translateY(-4px); }
-  100% { opacity: 1; transform: scale(1) translateY(0); }
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .animate-popIn {
-  animation: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: pop-in 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes backdrop-in {
@@ -136,31 +176,29 @@ body {
   to { opacity: 1; }
 }
 .animate-backdropIn {
-  animation: backdrop-in 0.25s ease-out both;
+  animation: backdrop-in 0.2s ease-out both;
 }
 
-/* Pulsing ring that draws the eye to a required, still-empty field */
+/* Ring that draws the eye to a required, still-empty field */
 @keyframes attention-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.45); border-color: #fb7185; }
-  50% { box-shadow: 0 0 0 6px rgba(244, 63, 94, 0); border-color: #f43f5e; }
+  0%, 100% { box-shadow: 0 0 0 0 rgb(188 77 54 / 0.4); border-color: #d06a53; }
+  50% { box-shadow: 0 0 0 4px rgb(188 77 54 / 0); border-color: #bc4d36; }
 }
 .animate-attention {
-  animation: attention-glow 1.4s ease-in-out infinite;
+  animation: attention-glow 1.6s ease-in-out infinite;
 }
 
-/* Banner icon bounce */
-@keyframes nudge {
-  0%, 100% { transform: translateY(0) rotate(0); }
-  20% { transform: translateY(-4px) rotate(-10deg); }
-  40% { transform: translateY(0) rotate(8deg); }
-  60% { transform: translateY(-2px) rotate(-4deg); }
+/* Ticket stamp: the signature motion when a deposit locks */
+@keyframes stamp-in {
+  0% { opacity: 0; transform: scale(1.35) rotate(-8deg); }
+  100% { opacity: 1; transform: scale(1) rotate(-4deg); }
 }
-.animate-nudge {
-  animation: nudge 1.6s ease-in-out infinite;
+.animate-stamp {
+  animation: stamp-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-shake, .animate-popIn, .animate-backdropIn, .animate-attention, .animate-nudge, .animate-fadeIn {
+  .animate-shake, .animate-popIn, .animate-backdropIn, .animate-attention, .animate-fadeIn, .animate-stamp, .animate-shimmer {
     animation: none;
   }
 }
@@ -199,7 +237,7 @@ body {
   100% { transform: scale(1); }
 }
 .wx-sun-flare {
-  animation: wx-sun-flare 0.9s cubic-bezier(0.34, 1.56, 0.64, 1), wx-sun-glow 3.5s ease-in-out 0.9s infinite;
+  animation: wx-sun-flare 0.9s cubic-bezier(0.16, 1, 0.3, 1), wx-sun-glow 3.5s ease-in-out 0.9s infinite;
 }
 
 .wx-moon {
@@ -241,6 +279,8 @@ body {
   90.5% { opacity: 0.35; }
 }
 .wx-flash {
+  /* Resting state is invisible, so a disabled animation never leaves a white sheet over the sky */
+  opacity: 0;
   animation: wx-flash 7s linear infinite;
 }
 .wx-bolt {
@@ -314,7 +354,7 @@ html.dark .region-card:hover { filter: brightness(1.06); }
 .map-flag-drop {
   transform-box: fill-box;
   transform-origin: bottom center;
-  animation: map-flag-drop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: map-flag-drop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @media (prefers-reduced-motion: reduce) {
   .map-flag-drop {
@@ -338,3 +378,28 @@ html.dark .region-card:hover { filter: brightness(1.06); }
 .no-scrollbar {
   scrollbar-width: none;
 }
+
+/* Sticky work bar: the page ground, slightly translucent so scrolled content reads underneath */
+.app-header {
+  background: color-mix(in srgb, var(--background) 92%, transparent);
+  backdrop-filter: saturate(1.2) blur(8px);
+  -webkit-backdrop-filter: saturate(1.2) blur(8px);
+}
+
+/* Stub that sits under the body on small screens and beside it from lg up */
+.ticket-stub { position: relative; border-top: 1.5px dashed var(--rule); }
+.ticket-stub::before, .ticket-stub::after {
+  content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--ticket-notch); border: 1px solid var(--rule); top: -9px;
+}
+.ticket-stub::before { left: -9px; clip-path: inset(0 0 0 50%); }
+.ticket-stub::after { right: -9px; clip-path: inset(0 50% 0 0); }
+@media (min-width: 1024px) {
+  .ticket-stub { border-top: 0; border-left: 1.5px dashed var(--rule); }
+  .ticket-stub::before { top: -9px; left: -9px; right: auto; clip-path: inset(50% 0 0 0); }
+  .ticket-stub::after { top: auto; bottom: -9px; left: -9px; right: auto; clip-path: inset(0 0 50% 0); }
+}
+
+/* Chart series (validated categorical order: subscription, affiliate, creation fee, penalty) */
+:root { --series-1: #3a62b0; --series-2: #c98a1a; --series-3: #0e8a78; --series-4: #c4532f; }
+html.dark { --series-1: #6d90d8; --series-2: #b8862a; --series-3: #2aa58f; --series-4: #df6c48; }

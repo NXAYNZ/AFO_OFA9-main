@@ -20,9 +20,10 @@ import {
   Loader2,
   MapPin,
   MessageCircle,
+  Accessibility,
 } from 'lucide-react';
 import { PlaceLightbox } from '@/components/PlaceLightbox';
-import { WeatherScene, sceneFor, SCENE_BACKGROUND, SCENE_LABEL } from '@/components/WeatherScene';
+import { WeatherScene, sceneFor, SCENE_BACKGROUND, SCENE_LABEL, SCENE_ICON } from '@/components/WeatherScene';
 import { Reviewer } from '@/lib/placeReviews';
 import { ProvinceTravel } from '@/data/thailandTravel';
 import { PLACE_PHOTOS } from '@/data/placePhotos';
@@ -178,15 +179,15 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
   return (
     <>
     <div
-      className="fixed inset-0 z-[80] flex items-start justify-center px-2 sm:px-4 pt-20 pb-4 bg-slate-950/70 backdrop-blur-sm animate-backdropIn"
+      className="fixed inset-0 z-[80] flex items-start justify-center px-2 sm:px-4 pt-16 sm:pt-20 pb-4 bg-ink-950/70 animate-backdropIn"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-6xl max-h-[calc(100vh-6rem)] flex flex-col bg-slate-50 rounded-3xl shadow-2xl overflow-hidden animate-popIn"
+        className="relative w-full max-w-6xl max-h-[calc(100vh-5rem)] sm:max-h-[calc(100vh-6rem)] flex flex-col bg-[var(--background)] rounded-xl shadow-2xl overflow-hidden animate-popIn"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Hero */}
-        <div className="relative h-44 sm:h-56 shrink-0 overflow-hidden" style={{ backgroundColor: region.hover }}>
+        <div className="relative h-48 sm:h-64 shrink-0 overflow-hidden" style={{ backgroundColor: region.hover }}>
           {heroImage && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -203,29 +204,26 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
           />
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-all hover:rotate-90"
+            className="absolute top-3 right-3 w-9 h-9 rounded-md bg-ink-950/50 hover:bg-ink-950/75 text-white flex items-center justify-center transition-colors"
             aria-label="ปิด"
           >
             <X className="w-5 h-5" />
           </button>
           <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 text-white">
-            <span className="on-light inline-block text-xs font-bold px-2 py-0.5 rounded-md text-slate-800" style={{ backgroundColor: region.fill }}>
-              {region.emoji} {region.label}
-            </span>
-            <h2 className="mt-1.5 text-3xl sm:text-4xl font-black leading-tight">{province.name}</h2>
-            <div className="text-sm text-white/80">
-              {province.nameEn} • ห่างกรุงเทพฯ ~{budget.distanceKm.toLocaleString()} กม. (ระยะตรง)
+            <h2 className="font-display text-4xl sm:text-5xl font-semibold leading-tight">{province.name}</h2>
+            <div className="mt-1 text-sm text-white/80">
+              {province.nameEn} · {region.label} · ห่างกรุงเทพฯ ~{budget.distanceKm.toLocaleString()} กม. (ระยะตรง)
             </div>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-5 p-4 sm:p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-6 p-4 sm:p-7">
             {/* LEFT: attractions, photo, map */}
             <div className="space-y-5 min-w-0">
               <section>
-                <h3 className="text-base font-extrabold text-slate-900 mb-3">
-                  แหล่งท่องเที่ยวแนะนำ ({province.attractions.length})
+                <h3 className="font-display text-xl font-semibold text-slate-900 mb-3">
+                  แหล่งท่องเที่ยวแนะนำ <span className="font-sans text-sm font-normal text-slate-500">{province.attractions.length} แห่ง</span>
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {province.attractions.map((a, i) => {
@@ -237,8 +235,9 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                       <button
                         key={a.name}
                         onClick={() => selectAttraction(i)}
-                        className={`group text-left rounded-2xl overflow-hidden bg-white border-2 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${
-                          isFocus ? 'border-emerald-500 shadow-md' : 'border-transparent shadow-sm'
+                        aria-pressed={isFocus}
+                        className={`group text-left rounded-lg overflow-hidden bg-white border transition-[box-shadow,border-color] duration-200 hover:shadow-md ${
+                          isFocus ? 'border-emerald-600 ring-1 ring-emerald-600' : 'border-slate-200'
                         }`}
                       >
                         <div className="relative h-24 sm:h-28 overflow-hidden bg-slate-200">
@@ -249,18 +248,15 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                               alt={a.name}
                               loading="lazy"
                               onError={() => markBroken(cover)}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             />
                           ) : (
-                            <div
-                              className="w-full h-full flex items-center justify-center text-4xl"
-                              style={{ background: `linear-gradient(135deg, ${region.fill}, ${region.hover})` }}
-                            >
-                              {CATEGORY_META[a.category].emoji}
+                            <div className="on-light w-full h-full flex items-end p-3" style={{ backgroundColor: region.fill }}>
+                              <span className="font-display text-xl font-semibold leading-tight text-slate-800 line-clamp-2">{a.name}</span>
                             </div>
                           )}
                           <span
-                            className="absolute top-1.5 left-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-md text-white"
+                            className="absolute top-1.5 left-1.5 text-[11px] font-semibold px-1.5 py-0.5 rounded text-white"
                             style={{ backgroundColor: crowd.color }}
                           >
                             {crowd.label}
@@ -272,20 +268,19 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                           )}
                           {access && access.wheelchair !== 'no' && (
                             <span
-                              className="absolute bottom-1.5 left-1.5 h-6 px-1.5 rounded-md text-white text-[11px] font-bold flex items-center gap-0.5 shadow"
+                              className="absolute bottom-1.5 left-1.5 h-6 px-1.5 rounded text-white text-[11px] font-semibold flex items-center gap-1"
                               style={{ backgroundColor: WHEELCHAIR_META[access.wheelchair].color }}
                               title={WHEELCHAIR_META[access.wheelchair].label}
                             >
-                              <span className="text-sm leading-none">♿</span>
+                              <Accessibility className="w-3.5 h-3.5" />
                               {access.wheelchair === 'limited' && <span>บางส่วน</span>}
                             </span>
                           )}
                         </div>
                         <div className="p-2.5">
-                          <div className="text-sm font-bold text-slate-800 truncate">{a.name}</div>
-                          <div className="text-[11px] text-slate-500">
-                            {CATEGORY_META[a.category].emoji} {CATEGORY_META[a.category].label}
-                          </div>
+                          {/* A photo-less tile already sets the name, so the body carries only the category */}
+                          {cover && <div className="text-sm font-semibold text-slate-900 truncate">{a.name}</div>}
+                          <div className="text-xs text-slate-500">{CATEGORY_META[a.category].label}</div>
                         </div>
                       </button>
                     );
@@ -294,30 +289,31 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
               </section>
 
               {/* Focused attraction */}
-              <section key={focus.name} className="rounded-3xl bg-white border border-slate-200 shadow-sm overflow-hidden animate-fadeIn">
-                <div className="p-4 sm:p-5">
+              <section key={focus.name} className="rounded-lg bg-white border border-slate-200 overflow-hidden animate-fadeIn">
+                <div className="p-4 sm:p-6">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <div className="text-xs text-slate-500">
-                        {CATEGORY_META[focus.category].emoji} {CATEGORY_META[focus.category].label}
+                      <h3 className="font-display text-2xl font-semibold text-slate-900">{focus.name}</h3>
+                      <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                        {React.createElement(CATEGORY_META[focus.category].icon, { className: 'w-3.5 h-3.5', strokeWidth: 1.8 })}
+                        {CATEGORY_META[focus.category].label} · จ.{province.name}
                       </div>
-                      <h3 className="text-xl font-black text-slate-900">{focus.name}</h3>
                     </div>
                     <div className="flex gap-2">
                       <a
                         href={mapsSearchUrl(focus.name, province.name)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="h-9 px-3 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 flex items-center gap-1.5 hover:border-sky-400 hover:text-sky-700 transition-colors"
+                        className="h-9 px-3 rounded-md border border-slate-300 text-xs font-semibold text-slate-700 flex items-center gap-1.5 hover:border-slate-500 hover:text-slate-900 transition-colors"
                       >
                         <ExternalLink className="w-3.5 h-3.5" /> Google Maps
                       </a>
                       <button
                         onClick={() => onToggleBasket(focus.name)}
-                        className={`h-9 px-3 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 ${
+                        className={`h-9 px-3 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors ${
                           isInBasket(focus.name)
-                            ? 'bg-emerald-600 text-white hover:bg-rose-500'
-                            : 'bg-slate-900 text-white hover:bg-emerald-600'
+                            ? 'bg-emerald-600 text-white hover:bg-rose-600'
+                            : 'bg-emerald-600 text-white hover:bg-emerald-700'
                         }`}
                       >
                         {isInBasket(focus.name) ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
@@ -327,26 +323,26 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                   </div>
                   {/* Wheelchair access (OpenStreetMap) */}
                   <div
-                    className="mt-3 flex items-start gap-2.5 rounded-2xl border px-3 py-2"
+                    className="mt-4 flex items-start gap-2.5 rounded-md border px-3 py-2.5"
                     style={
                       focusAccess
                         ? { borderColor: `${WHEELCHAIR_META[focusAccess.wheelchair].color}55`, backgroundColor: `${WHEELCHAIR_META[focusAccess.wheelchair].color}0f` }
-                        : { borderColor: '#e2e8f0', backgroundColor: '#f8fafc' }
+                        : { borderColor: 'var(--rule)', backgroundColor: 'transparent' }
                     }
                   >
                     <span
-                      className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-lg text-white ${focusAccess?.wheelchair === 'no' ? 'opacity-60' : ''}`}
-                      style={{ backgroundColor: focusAccess ? WHEELCHAIR_META[focusAccess.wheelchair].color : '#cbd5e1' }}
+                      className={`shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-white ${focusAccess?.wheelchair === 'no' ? 'opacity-60' : ''}`}
+                      style={{ backgroundColor: focusAccess ? WHEELCHAIR_META[focusAccess.wheelchair].color : '#8f9196' }}
                       aria-hidden
                     >
-                      ♿
+                      <Accessibility className="w-4 h-4" />
                     </span>
                     <div className="min-w-0 text-xs">
-                      <div className="font-bold text-slate-800 text-sm">
+                      <div className="font-semibold text-slate-900 text-sm">
                         {focusAccess ? WHEELCHAIR_META[focusAccess.wheelchair].label : 'ยังไม่มีข้อมูลการเข้าถึงสำหรับผู้พิการ'}
                       </div>
                       <div className="text-slate-500">
-                        {focusAccess?.note && `${focusAccess.note} • `}
+                        {focusAccess?.note && `${focusAccess.note} · `}
                         {focusAccess ? 'ข้อมูลจาก ' : 'ช่วยเพิ่มข้อมูลได้ที่ '}
                         <a
                           href={
@@ -360,21 +356,21 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                         >
                           {focusAccess ? 'OpenStreetMap' : 'Wheelmap'}
                         </a>
-                        {focusAccess && ' • ควรโทรสอบถามสถานที่ก่อนเดินทาง'}
+                        {focusAccess && ' · ควรโทรสอบถามสถานที่ก่อนเดินทาง'}
                       </div>
                     </div>
                   </div>
                   {focusPhoto?.extract ? (
-                    <p className="mt-3 text-sm text-slate-600 leading-relaxed">{focusPhoto.extract}</p>
+                    <p className="mt-4 text-sm text-slate-700 leading-relaxed max-w-[68ch]">{focusPhoto.extract}</p>
                   ) : (
-                    <p className="mt-3 text-sm text-slate-400">ยังไม่มีคำอธิบายสำหรับสถานที่นี้ ดูรายละเอียดเพิ่มเติมได้ใน Google Maps</p>
+                    <p className="mt-4 text-sm text-slate-500">ยังไม่มีคำอธิบายสำหรับสถานที่นี้ ดูรายละเอียดเพิ่มเติมได้ใน Google Maps</p>
                   )}
                   {focusPhoto?.pageUrl && (
                     <a
                       href={focusPhoto.pageUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-1 inline-block text-[11px] text-slate-400 hover:text-slate-600 underline"
+                      className="mt-1 inline-block text-[11px] text-slate-500 hover:text-slate-700 underline"
                     >
                       ข้อมูลและภาพ: Wikipedia / Wikimedia Commons
                     </a>
@@ -395,8 +391,8 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                         <button
                           key={src}
                           onClick={() => openLightbox(i)}
-                          className={`group relative h-20 sm:h-28 rounded-xl overflow-hidden border-2 cursor-zoom-in transition-all ${
-                            i === photoIndex ? 'border-emerald-500 shadow-md' : 'border-transparent opacity-80 hover:opacity-100'
+                          className={`group relative h-20 sm:h-28 rounded-md overflow-hidden cursor-zoom-in transition-opacity ${
+                            i === photoIndex ? 'ring-2 ring-emerald-600 ring-offset-2 ring-offset-white' : 'opacity-85 hover:opacity-100'
                           }`}
                           aria-label={`ขยายรูปที่ ${i + 1} ของ ${focus.name}`}
                         >
@@ -406,7 +402,7 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                             alt={`${focus.name} ${i + 1}`}
                             loading="lazy"
                             onError={() => markBroken(src)}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            className="w-full h-full object-cover transition-transform duration-500"
                           />
                         </button>
                       ))}
@@ -414,7 +410,7 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                   )}
                   <button
                     onClick={() => openLightbox(Math.min(photoIndex, Math.max(focusImages.length - 1, 0)))}
-                    className="h-9 px-3 rounded-xl bg-amber-50 border border-amber-200 text-xs font-bold text-amber-800 flex items-center gap-1.5 hover:bg-amber-100 transition-colors"
+                    className="h-9 px-3 rounded-md border border-slate-300 text-xs font-semibold text-slate-700 flex items-center gap-1.5 hover:border-slate-500 hover:text-slate-900 transition-colors"
                   >
                     <MessageCircle className="w-3.5 h-3.5" /> รีวิว & ความคิดเห็น
                   </button>
@@ -426,21 +422,22 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
             <div className="space-y-4">
               {/* Weather: animated scene follows the selected day; tap the scene for an effect */}
               <section
-                className="relative overflow-hidden rounded-3xl text-white shadow-md transition-[background] duration-700"
+                className="relative overflow-hidden rounded-lg text-white transition-[background] duration-700"
                 style={{ background: SCENE_BACKGROUND[scene] }}
               >
-                <WeatherScene kind={scene} poke={pokeCount} />
+                <WeatherScene kind={scene} poke={pokeCount} compact />
                 {/* Remounted per tap so a thunder strike can replay the rumble */}
                 <div
                   key={scene === 'storm' ? `rumble-${pokeCount}` : 'weather'}
                   className={`relative z-10 p-5 ${pokeCount > 0 && scene === 'storm' ? 'wx-rumble' : ''}`}
                 >
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-bold flex items-center gap-2 drop-shadow">
+                  {/* Source sits beside the heading, out of the corner where the sun and clouds drift */}
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="font-display text-lg font-semibold flex items-center gap-2">
                       <CloudSun className="w-5 h-5" /> สภาพอากาศ
                     </h3>
                     {weather && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/25 backdrop-blur-sm">
+                      <span className="text-[11px] text-white/80">
                         {weather.source === 'OPEN_METEO_API' ? 'Open-Meteo สด' : weather.source === 'TMD_API' ? 'กรมอุตุฯ' : 'ข้อมูลสำรอง'}
                       </span>
                     )}
@@ -454,21 +451,21 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                       <button
                         type="button"
                         onClick={() => setPokeCount((c) => c + 1)}
-                        className="mt-3 w-full flex items-end gap-4 text-left rounded-2xl cursor-pointer active:scale-[0.99] transition-transform"
+                        className="mt-3 w-full flex items-end gap-4 text-left rounded-md cursor-pointer"
                         aria-label={`เอฟเฟกต์${SCENE_LABEL[scene]}`}
                         title="แตะเพื่อดูเอฟเฟกต์"
                       >
                         <div className="drop-shadow-md">
                           <div className="text-[11px] font-semibold text-white/80">
-                            {isToday ? 'ตอนนี้' : `${formatDay(selectedDay!.date)} • สูงสุด`}
+                            {isToday ? 'ตอนนี้' : `${formatDay(selectedDay!.date)} · สูงสุด`}
                           </div>
-                          <div className="text-5xl font-black leading-none">
+                          <div className="font-mono text-5xl font-semibold leading-none">
                             {isToday ? Math.round(weather.currentTemp) : selectedDay!.tempMax}°
                           </div>
                         </div>
                         <div className="text-sm space-y-0.5 pb-1 drop-shadow">
-                          <div className="font-bold">
-                            {selectedDay?.icon} {selectedDay?.condition || SCENE_LABEL[scene]}
+                          <div className="font-semibold">
+                            {selectedDay?.condition || SCENE_LABEL[scene]}
                           </div>
                           <div className="flex items-center gap-1">
                             <Droplets className="w-3.5 h-3.5" />
@@ -481,7 +478,7 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                           <div className="flex items-center gap-1">
                             <Thermometer className="w-3.5 h-3.5" />
                             {selectedDay ? `${selectedDay.tempMin}°-${selectedDay.tempMax}°` : weather.season}
-                            {isToday && weather.humidity !== undefined && ` • ชื้น ${weather.humidity}%`}
+                            {isToday && weather.humidity !== undefined && ` · ชื้น ${weather.humidity}%`}
                           </div>
                         </div>
                       </button>
@@ -495,30 +492,31 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                               setWeatherDayIndex(i);
                               setPokeCount(0);
                             }}
-                            className={`rounded-xl py-1.5 backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 ${
-                              i === weatherDayIndex ? 'bg-white/35 ring-2 ring-white/80 shadow-lg' : 'bg-black/15 hover:bg-white/20'
+                            aria-pressed={i === weatherDayIndex}
+                            className={`rounded py-1.5 transition-colors duration-150 ${
+                              i === weatherDayIndex ? 'bg-ink-50 text-ink-900' : 'bg-ink-950/25 hover:bg-ink-950/40'
                             }`}
                             title={d.condition}
                           >
-                            <div className="text-[10px] text-white/80">{i === 0 ? 'วันนี้' : formatDay(d.date)}</div>
-                            <div className="text-lg leading-tight">{d.icon}</div>
-                            <div className="text-[11px] font-bold">{Math.round(d.tempMax)}°</div>
-                            <div className="text-[10px] text-white/80">
+                            <div className="text-[10px] opacity-80">{i === 0 ? 'วันนี้' : formatDay(d.date)}</div>
+                            {React.createElement(SCENE_ICON[sceneFor(d, false)], { className: 'w-4 h-4 mx-auto my-1', strokeWidth: 1.8 })}
+                            <div className="text-[11px] font-semibold tabular">{Math.round(d.tempMax)}°</div>
+                            <div className="text-[10px] opacity-80">
                               {d.rainMm !== undefined ? `${d.rainMm}มม.` : `${d.rainProbability}%`}
                             </div>
                           </button>
                         ))}
                       </div>
-                      <p className="mt-2 text-[10px] text-white/70 drop-shadow">
-                        กดวันเพื่อดูพยากรณ์ • แตะที่อุณหภูมิเพื่อดูเอฟเฟกต์
+                      <p className="mt-2 text-[11px] text-white/75">
+                        เลือกวันเพื่อดูพยากรณ์ · แตะอุณหภูมิเพื่อดูเอฟเฟกต์
                         {weather.source === 'TMD_API' && (
                           <>
                             <br />
                             พยากรณ์จากกรมอุตุนิยมวิทยา
                             {weather.updatedAt &&
                               ` (อัปเดต ${new Date(weather.updatedAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' })} น.)`}
-                            {weather.currentTempSource === 'OPEN_METEO' && ' • อุณหภูมิตอนนี้จาก Open-Meteo'}
-                            {weather.currentTempSource === 'TMD_FORECAST_MAX' && ' • อุณหภูมิตอนนี้คือค่าสูงสุดของวัน'}
+                            {weather.currentTempSource === 'OPEN_METEO' && ' · อุณหภูมิตอนนี้จาก Open-Meteo'}
+                            {weather.currentTempSource === 'TMD_FORECAST_MAX' && ' · อุณหภูมิตอนนี้คือค่าสูงสุดของวัน'}
                           </>
                         )}
                       </p>
@@ -530,13 +528,13 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
               </section>
 
               {/* Crowd */}
-              <section className="rounded-3xl bg-white border border-slate-200 p-5 shadow-sm">
+              <section className="rounded-lg bg-white border border-slate-200 p-5">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                    <Users className="w-5 h-5 text-orange-500" /> ความหนาแน่นตอนนี้
+                  <h3 className="font-display text-lg font-semibold text-slate-900 flex items-center gap-2">
+                    <Users className="w-5 h-5 text-slate-500" /> ความหนาแน่นตอนนี้
                   </h3>
                   <span
-                    className="text-xs font-bold px-2 py-0.5 rounded-md text-white"
+                    className="text-xs font-semibold px-2 py-0.5 rounded text-white"
                     style={{ backgroundColor: CROWD_LEVELS[overallLevel].color }}
                   >
                     {CROWD_LEVELS[overallLevel].label}
@@ -547,12 +545,12 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                     <button
                       key={a.name}
                       onClick={() => setFocusIndex(i)}
-                      className={`w-full flex items-center gap-2 text-left rounded-lg px-1.5 py-1 transition-colors ${
+                      className={`w-full flex items-center gap-2 text-left rounded px-1.5 py-1 transition-colors ${
                         i === focusIndex ? 'bg-slate-100' : 'hover:bg-slate-50'
                       }`}
                     >
                       <span className="w-24 sm:w-28 truncate text-xs text-slate-700">{a.name}</span>
-                      <span className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+                      <span className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                         <span
                           className="block h-full rounded-full transition-all duration-700"
                           style={{ width: `${Math.max(4, crowds[i].score * 100)}%`, backgroundColor: CROWD_LEVELS[crowds[i].level].color }}
@@ -563,7 +561,7 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                   ))}
                 </div>
 
-                <div className="mt-4 text-xs font-semibold text-slate-600">ช่วงเวลาคนเยอะวันนี้ · {focus.name}</div>
+                <div className="mt-5 text-xs font-medium text-slate-600">ช่วงเวลาคนเยอะวันนี้ · {focus.name}</div>
                 <div className="mt-2 flex items-end gap-[3px] h-16">
                   {focusCrowd.hourly.slice(5, 24).map((v, i) => {
                     const h = i + 5;
@@ -571,28 +569,28 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                     return (
                       <div key={h} className="flex-1 flex flex-col items-center justify-end h-full" title={`${h}:00 น.`}>
                         <div
-                          className={`w-full rounded-t transition-all duration-500 ${isNow ? 'bg-orange-500' : 'bg-slate-300'}`}
+                          className={`w-full rounded-t-sm transition-[height] duration-500 ${isNow ? 'bg-orange-600' : 'bg-slate-300'}`}
                           style={{ height: `${Math.max(4, v * 100)}%` }}
                         />
                       </div>
                     );
                   })}
                 </div>
-                <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                <div className="flex justify-between text-[11px] text-slate-500 mt-1 tabular">
                   <span>05:00</span>
                   <span>12:00</span>
                   <span>18:00</span>
                   <span>23:00</span>
                 </div>
-                <p className="mt-3 text-[10px] text-slate-400 leading-relaxed">
-                  * ค่าประมาณจากช่วงเวลา วันในสัปดาห์ ฤดูท่องเที่ยว และความนิยมของพื้นที่ ไม่ใช่ข้อมูลสดจากสถานที่จริง
+                <p className="mt-3 text-[11px] text-slate-500 leading-relaxed">
+                  ค่าประมาณจากช่วงเวลา วันในสัปดาห์ ฤดูท่องเที่ยว และความนิยมของพื้นที่ ไม่ใช่ข้อมูลสดจากสถานที่จริง
                 </p>
               </section>
 
               {/* Budget */}
-              <section className="rounded-3xl bg-white border border-slate-200 p-5 shadow-sm">
-                <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                  <Wallet className="w-5 h-5 text-emerald-600" /> งบประมาณโดยประมาณ
+              <section className="rounded-lg bg-white border border-slate-200 p-5">
+                <h3 className="font-display text-lg font-semibold text-slate-900 flex items-center gap-2">
+                  <Wallet className="w-5 h-5 text-slate-500" /> งบประมาณโดยประมาณ
                 </h3>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <label className="text-xs text-slate-600">
@@ -600,7 +598,7 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                     <select
                       value={days}
                       onChange={(e) => setDays(Number(e.target.value))}
-                      className="mt-1 w-full h-9 px-2 rounded-lg border border-slate-300 text-sm font-semibold text-slate-800 outline-none focus:border-emerald-500"
+                      className="mt-1 w-full h-9 px-2 rounded-md border border-slate-300 bg-white text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                     >
                       {[1, 2, 3, 4, 5, 7].map((d) => (
                         <option key={d} value={d}>
@@ -614,7 +612,7 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                     <select
                       value={people}
                       onChange={(e) => setPeople(Number(e.target.value))}
-                      className="mt-1 w-full h-9 px-2 rounded-lg border border-slate-300 text-sm font-semibold text-slate-800 outline-none focus:border-emerald-500"
+                      className="mt-1 w-full h-9 px-2 rounded-md border border-slate-300 bg-white text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                     >
                       {[1, 2, 3, 4, 5, 6, 8, 10].map((n) => (
                         <option key={n} value={n}>
@@ -633,17 +631,18 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                         setTier(t.tier);
                         setCustomBudget(null);
                       }}
-                      className={`rounded-xl border-2 p-2 text-center transition-all duration-200 hover:-translate-y-0.5 ${
+                      aria-pressed={tier === t.tier && customPerPerson === null}
+                      className={`rounded-md border p-2 text-center transition-colors duration-150 ${
                         tier === t.tier && customPerPerson === null
-                          ? 'border-emerald-500 bg-emerald-50'
+                          ? 'border-emerald-600 bg-emerald-50 ring-1 ring-emerald-600'
                           : coveredTier?.tier === t.tier
-                            ? 'border-dashed border-emerald-400'
-                            : 'border-slate-200 hover:border-emerald-200'
+                            ? 'border-dashed border-emerald-500'
+                            : 'border-slate-200 hover:border-slate-400'
                       }`}
                     >
-                      <div className="text-[11px] font-semibold text-slate-500">{TIER_LABELS[t.tier].label}</div>
-                      <div className="text-sm font-black text-slate-900">฿{t.total.toLocaleString()}</div>
-                      <div className="text-[10px] text-slate-400">/คน</div>
+                      <div className="text-[11px] font-medium text-slate-500">{TIER_LABELS[t.tier].label}</div>
+                      <div className="text-sm font-semibold font-mono text-slate-900">฿{t.total.toLocaleString()}</div>
+                      <div className="text-[10px] text-slate-500">ต่อคน</div>
                     </button>
                   ))}
                 </div>
@@ -653,20 +652,20 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
 
                 {/* Own budget */}
                 <div
-                  className={`mt-3 rounded-xl border-2 p-2.5 transition-colors ${
-                    customPerPerson !== null ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'
+                  className={`mt-3 rounded-md border p-2.5 transition-colors ${
+                    customPerPerson !== null ? 'border-emerald-600 bg-emerald-50' : 'border-slate-200'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-slate-700">หรือกรอกงบของคุณเอง</span>
-                    <div className="flex rounded-lg bg-slate-100 p-0.5 text-[11px] font-bold" role="group" aria-label="หน่วยงบ">
+                    <span className="text-xs font-medium text-slate-700">หรือกรอกงบของคุณเอง</span>
+                    <div className="flex rounded border border-slate-200 bg-white p-0.5 text-[11px] font-medium" role="group" aria-label="หน่วยงบ">
                       {(['perPerson', 'total'] as const).map((m) => (
                         <button
                           key={m}
                           type="button"
                           onClick={() => setCustomMode(m)}
-                          className={`px-2 py-0.5 rounded-md transition-colors ${
-                            customMode === m ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                          className={`px-2 py-0.5 rounded-sm transition-colors ${
+                            customMode === m ? 'bg-slate-900 text-white dark:bg-white dark:text-ink-900' : 'text-slate-500 hover:text-slate-900'
                           }`}
                           aria-pressed={customMode === m}
                         >
@@ -677,7 +676,7 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                   </div>
                   <div className="mt-2 flex items-center gap-2">
                     <div className="relative flex-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">฿</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">฿</span>
                       <input
                         type="number"
                         inputMode="numeric"
@@ -686,7 +685,7 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                         value={customBudget ?? ''}
                         onChange={(e) => setCustomBudget(e.target.value === '' ? null : Math.max(0, Number(e.target.value)))}
                         placeholder={customMode === 'perPerson' ? `เช่น ${selectedTier.total.toLocaleString()}` : `เช่น ${(selectedTier.total * people).toLocaleString()}`}
-                        className="w-full h-10 pl-7 pr-3 rounded-lg border border-slate-300 bg-white text-sm font-bold text-slate-900 font-mono outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15"
+                        className="w-full h-10 pl-7 pr-3 rounded-md border border-slate-300 bg-white text-sm font-semibold text-slate-900 font-mono outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                         aria-label={customMode === 'perPerson' ? 'งบต่อคน (บาท)' : 'งบทั้งกลุ่ม (บาท)'}
                       />
                     </div>
@@ -694,7 +693,7 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                       <button
                         type="button"
                         onClick={() => setCustomBudget(null)}
-                        className="h-10 px-2.5 rounded-lg text-xs font-semibold text-slate-500 hover:bg-slate-100"
+                        className="h-10 px-2.5 rounded-md text-xs font-medium text-slate-500 hover:bg-slate-100"
                       >
                         ล้าง
                       </button>
@@ -702,14 +701,14 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                   </div>
                   {customPerPerson !== null && (
                     <p
-                      className={`mt-2 text-[11px] font-semibold animate-fadeIn ${
+                      className={`mt-2 text-xs font-medium animate-fadeIn ${
                         coveredTier ? 'text-emerald-700' : 'text-amber-700'
                       }`}
                     >
-                      {customMode === 'total' && `≈ ฿${customPerPerson.toLocaleString()}/คน • `}
+                      {customMode === 'total' && `≈ ฿${customPerPerson.toLocaleString()}/คน · `}
                       {coveredTier
-                        ? `✓ พอสำหรับระดับ "${TIER_LABELS[coveredTier.tier].label}" (${TIER_LABELS[coveredTier.tier].hint})`
-                        : `⚠ ต่ำกว่าแบบประหยัดอยู่ ฿${(saverTotal - customPerPerson).toLocaleString()}/คน ลองลดวันหรือให้ AI หาทางประหยัด`}
+                        ? `พอสำหรับระดับ "${TIER_LABELS[coveredTier.tier].label}" (${TIER_LABELS[coveredTier.tier].hint})`
+                        : `ต่ำกว่าแบบประหยัดอยู่ ฿${(saverTotal - customPerPerson).toLocaleString()}/คน ลองลดวันหรือให้ AI หาทางประหยัด`}
                     </p>
                   )}
                 </div>
@@ -725,31 +724,31 @@ export const ProvinceDetailModal: React.FC<ProvinceDetailModalProps> = ({
                       <span className="flex items-center gap-2 text-slate-600">
                         <Icon className="w-4 h-4 text-slate-400" /> {label}
                       </span>
-                      <span className="font-semibold text-slate-800">฿{value.toLocaleString()}</span>
+                      <span className="font-mono text-slate-900">฿{value.toLocaleString()}</span>
                     </li>
                   ))}
-                  <li className="flex items-center justify-between pt-2 border-t border-slate-100 font-bold">
+                  <li className="flex items-center justify-between pt-2.5 mt-1 border-t border-slate-200 font-semibold text-slate-900">
                     <span>รวมทั้งกลุ่ม ({people} คน)</span>
-                    <span className="text-emerald-700">฿{(perPersonBudget * people).toLocaleString()}</span>
+                    <span className="font-mono text-lg">฿{(perPersonBudget * people).toLocaleString()}</span>
                   </li>
                 </ul>
                 {customPerPerson !== null && (
-                  <p className="mt-1.5 text-[10px] text-slate-400">แบ่งงบของคุณตามสัดส่วนค่าใช้จ่ายโดยประมาณ (ต่อคน)</p>
+                  <p className="mt-1.5 text-[11px] text-slate-500">แบ่งงบของคุณตามสัดส่วนค่าใช้จ่ายโดยประมาณ (ต่อคน)</p>
                 )}
                 {budget.suggestFlight && (
-                  <p className="mt-2 text-[11px] text-sky-700 bg-sky-50 rounded-lg px-2.5 py-1.5">
-                    ✈️ ระยะทางถนนประมาณ {budget.roadKm.toLocaleString()} กม. แนะนำเทียบราคาเครื่องบินโลว์คอสต์ด้วย
+                  <p className="mt-2 text-xs text-sky-800 bg-sky-50 rounded-md px-2.5 py-1.5 flex items-start gap-1.5">
+                    <Plane className="w-3.5 h-3.5 mt-0.5 shrink-0" /> ระยะทางถนนประมาณ {budget.roadKm.toLocaleString()} กม. แนะนำเทียบราคาเครื่องบินโลว์คอสต์ด้วย
                   </p>
                 )}
-                <p className="mt-2 text-[10px] text-slate-400">* ประมาณการเบื้องต้น ราคาจริงขึ้นกับช่วงเวลาและการจอง</p>
+                <p className="mt-2 text-[11px] text-slate-500">ประมาณการเบื้องต้น ราคาจริงขึ้นกับช่วงเวลาและการจอง</p>
 
                 <button
                   onClick={handlePlan}
-                  className="btn-shine mt-4 w-full h-11 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-md shadow-emerald-500/25 transition-all hover:-translate-y-0.5"
+                  className="mt-4 w-full h-11 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
                 >
                   <Sparkles className="w-4 h-4" /> ให้ AI วางแผนด้วยงบ ฿{(perPersonBudget * people).toLocaleString()}
                 </button>
-                <p className="mt-1.5 text-[10px] text-center text-slate-400 flex items-center justify-center gap-1">
+                <p className="mt-1.5 text-[11px] text-center text-slate-500 flex items-center justify-center gap-1">
                   <MapPin className="w-3 h-3" />
                   ใช้สถานที่ที่เลือกไว้ หรือทุกที่ในจังหวัดถ้ายังไม่ได้เลือก
                 </p>

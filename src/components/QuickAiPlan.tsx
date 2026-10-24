@@ -16,10 +16,10 @@ interface QuickAiPlanProps {
 }
 
 const STYLES = [
-  { id: 'สายคาเฟ่', label: '☕ คาเฟ่' },
-  { id: 'สายลุยธรรมชาติ', label: '🏕️ ธรรมชาติ' },
-  { id: 'สายปาร์ตี้', label: '🎉 ปาร์ตี้' },
-  { id: 'สายประหยัด', label: '💰 ประหยัด' },
+  { id: 'สายคาเฟ่', label: 'คาเฟ่' },
+  { id: 'สายลุยธรรมชาติ', label: 'ธรรมชาติ' },
+  { id: 'สายปาร์ตี้', label: 'ปาร์ตี้' },
+  { id: 'สายประหยัด', label: 'ประหยัด' },
 ];
 
 const BASKET_OPTION = '__basket__';
@@ -90,32 +90,31 @@ export const QuickAiPlan: React.FC<QuickAiPlanProps> = ({ suggestedProvince, bas
   };
 
   return (
-    <div className="rounded-3xl p-5 shadow-lg text-white bg-gradient-to-br from-emerald-600 via-teal-600 to-sky-700 relative overflow-hidden">
-      <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-      <div className="relative">
-        <div className="font-black text-lg flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-amber-300" /> สร้างแผนเที่ยว AI ทันที
+    <div className="rounded-xl bg-white border border-slate-200 shadow-sm p-5">
+      <div>
+        <div className="font-display text-lg font-semibold text-slate-900 flex items-center gap-2">
+          <Sparkles className="w-[18px] h-[18px] text-emerald-600" /> วางแผนด่วนด้วย AI
         </div>
-        <p className="text-xs text-white/80">เลือกนิดเดียว แล้วให้ AI จัดแผน งบ และเทียบราคาให้เลย</p>
+        <p className="mt-0.5 text-xs text-slate-500">เลือกนิดเดียว แล้วให้ AI จัดแผน งบ และเทียบราคาให้</p>
 
         <div className="mt-4 space-y-3">
           <label className="block">
-            <span className="text-[11px] font-semibold text-white/80">ไปไหนดี</span>
+            <span className="text-xs font-medium text-slate-600">ไปไหนดี</span>
             <select
               value={destination}
               onChange={(e) => {
                 setDestination(e.target.value);
                 setCustomBudget(null);
               }}
-              className="mt-1 w-full h-10 px-3 rounded-xl bg-white text-slate-900 text-sm font-semibold outline-none focus:ring-4 focus:ring-white/30"
+              className="mt-1 w-full h-10 px-2.5 rounded-md border border-slate-300 bg-white text-slate-900 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
             >
               {basket.length > 0 && (
                 <option value={BASKET_OPTION}>
-                  🧳 สถานที่ในทริปของฉัน ({basket.length} ที่ • {basketProvinces.join(', ')})
+                  สถานที่ในทริปของฉัน ({basket.length} ที่ · {basketProvinces.join(', ')})
                 </option>
               )}
               {REGION_ORDER.map((region) => (
-                <optgroup key={region} label={`${REGION_META[region].emoji} ${REGION_META[region].label}`}>
+                <optgroup key={region} label={REGION_META[region].label}>
                   {PROVINCE_TRAVEL.filter((p) => p.region === region).map((p) => (
                     <option key={p.name} value={p.name}>
                       {p.name}
@@ -128,7 +127,7 @@ export const QuickAiPlan: React.FC<QuickAiPlanProps> = ({ suggestedProvince, bas
 
           <div className="grid grid-cols-2 gap-2">
             <label className="block">
-              <span className="text-[11px] font-semibold text-white/80 flex items-center gap-1">
+              <span className="text-xs font-medium text-slate-600 flex items-center gap-1">
                 <CalendarDays className="w-3 h-3" /> วันเริ่มเดินทาง
               </span>
               <input
@@ -136,31 +135,31 @@ export const QuickAiPlan: React.FC<QuickAiPlanProps> = ({ suggestedProvince, bas
                 value={startDate}
                 min={new Date().toISOString().slice(0, 10)}
                 onChange={(e) => e.target.value && setStartDate(e.target.value)}
-                className="mt-1 w-full h-10 px-2 rounded-xl bg-white text-slate-900 text-sm font-semibold outline-none focus:ring-4 focus:ring-white/30"
+                className="mt-1 w-full h-10 px-2 rounded-md border border-slate-300 bg-white text-slate-900 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               />
             </label>
             <div>
-              <span className="text-[11px] font-semibold text-white/80">กี่คน</span>
-              <div className="mt-1 h-10 flex items-center justify-between rounded-xl bg-white/15 border border-white/25 px-1">
+              <span className="text-xs font-medium text-slate-600">กี่คน</span>
+              <div className="mt-1 h-10 flex items-center justify-between rounded-md border border-slate-300 bg-white px-1">
                 <button
                   type="button"
                   onClick={() => {
                     setPeople((n) => Math.max(1, n - 1));
                     setCustomBudget(null);
                   }}
-                  className="w-8 h-8 rounded-lg hover:bg-white/20 flex items-center justify-center"
+                  className="w-8 h-8 rounded text-slate-600 hover:bg-slate-100 flex items-center justify-center"
                   aria-label="ลดจำนวนคน"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="font-black">{people} คน</span>
+                <span className="text-sm font-semibold text-slate-900 tabular">{people} คน</span>
                 <button
                   type="button"
                   onClick={() => {
                     setPeople((n) => Math.min(20, n + 1));
                     setCustomBudget(null);
                   }}
-                  className="w-8 h-8 rounded-lg hover:bg-white/20 flex items-center justify-center"
+                  className="w-8 h-8 rounded text-slate-600 hover:bg-slate-100 flex items-center justify-center"
                   aria-label="เพิ่มจำนวนคน"
                 >
                   <Plus className="w-4 h-4" />
@@ -170,8 +169,8 @@ export const QuickAiPlan: React.FC<QuickAiPlanProps> = ({ suggestedProvince, bas
           </div>
 
           <div>
-            <span className="text-[11px] font-semibold text-white/80">กี่วัน</span>
-            <div className="mt-1 grid grid-cols-5 gap-1">
+            <span className="text-xs font-medium text-slate-600">กี่วัน</span>
+            <div className="mt-1 grid grid-cols-5 rounded-md border border-slate-200 p-0.5">
               {[1, 2, 3, 4, 5].map((n) => (
                 <button
                   type="button"
@@ -180,8 +179,9 @@ export const QuickAiPlan: React.FC<QuickAiPlanProps> = ({ suggestedProvince, bas
                     setDays(n);
                     setCustomBudget(null);
                   }}
-                  className={`h-8 rounded-lg text-xs font-bold transition-all ${
-                    days === n ? 'bg-white text-teal-700 shadow-md' : 'bg-white/15 hover:bg-white/25'
+                  aria-pressed={days === n}
+                  className={`h-8 rounded text-xs font-medium transition-colors ${
+                    days === n ? 'bg-slate-900 text-white dark:bg-white dark:text-ink-900' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   {n === 1 ? 'ไปกลับ' : `${n} วัน`}
@@ -191,15 +191,16 @@ export const QuickAiPlan: React.FC<QuickAiPlanProps> = ({ suggestedProvince, bas
           </div>
 
           <div>
-            <span className="text-[11px] font-semibold text-white/80">สไตล์</span>
-            <div className="mt-1 grid grid-cols-4 gap-1">
+            <span className="text-xs font-medium text-slate-600">สไตล์</span>
+            <div className="mt-1 grid grid-cols-4 rounded-md border border-slate-200 p-0.5">
               {STYLES.map((s) => (
                 <button
                   type="button"
                   key={s.id}
                   onClick={() => setStyle(s.id)}
-                  className={`h-8 rounded-lg text-[11px] font-bold transition-all ${
-                    style === s.id ? 'bg-white text-teal-700 shadow-md' : 'bg-white/15 hover:bg-white/25'
+                  aria-pressed={style === s.id}
+                  className={`h-8 rounded text-xs font-medium transition-colors ${
+                    style === s.id ? 'bg-slate-900 text-white dark:bg-white dark:text-ink-900' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   {s.label}
@@ -209,9 +210,9 @@ export const QuickAiPlan: React.FC<QuickAiPlanProps> = ({ suggestedProvince, bas
           </div>
 
           <label className="block">
-            <span className="text-[11px] font-semibold text-white/80 flex items-center gap-1">
+            <span className="text-xs font-medium text-slate-600 flex items-center gap-1">
               <Wallet className="w-3 h-3" /> งบรวมทั้งทริป (บาท)
-              {customBudget === null && <span className="font-normal text-white/60">• ประมาณการอัตโนมัติ</span>}
+              {customBudget === null && <span className="font-normal text-slate-500">· ประมาณการอัตโนมัติ</span>}
             </span>
             <input
               type="number"
@@ -219,7 +220,7 @@ export const QuickAiPlan: React.FC<QuickAiPlanProps> = ({ suggestedProvince, bas
               step={500}
               value={budget || ''}
               onChange={(e) => setCustomBudget(Math.max(0, Number(e.target.value)))}
-              className="mt-1 w-full h-10 px-3 rounded-xl bg-white text-slate-900 text-sm font-bold outline-none focus:ring-4 focus:ring-white/30"
+              className="mt-1 w-full h-10 px-3 rounded-md border border-slate-300 bg-white text-slate-900 text-sm font-mono outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
             />
           </label>
         </div>
@@ -227,12 +228,12 @@ export const QuickAiPlan: React.FC<QuickAiPlanProps> = ({ suggestedProvince, bas
         <button
           onClick={handleGo}
           disabled={!budget || (!useBasket && !destination)}
-          className="btn-shine mt-4 w-full h-12 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-900 text-sm font-black flex items-center justify-center gap-2 shadow-lg shadow-amber-500/30 transition-all hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50"
+          className="mt-5 w-full h-11 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
         >
           <Sparkles className="w-4 h-4" />
-          สร้างแผน {formatRange(startDate, days)} เลย!
+          สร้างแผน {formatRange(startDate, days)}
         </button>
-        <p className="mt-2 text-[10px] text-white/70 text-center">ใช้โควตา AI 1 ครั้ง • ปรับรายละเอียดต่อได้ในหน้า AI วางแผน</p>
+        <p className="mt-2 text-[11px] text-slate-500 text-center">ใช้โควตา AI 1 ครั้ง · ปรับรายละเอียดต่อได้ในหน้า AI Planner</p>
       </div>
     </div>
   );

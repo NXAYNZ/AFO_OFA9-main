@@ -241,6 +241,8 @@ export interface CommunityTrip {
   tripPoolBalance: number;
   highlights: string[];
   imageUrl: string;
+  // Attribution shown on the photo when the licence asks for one
+  imageCredit?: string;
   // Host-uploaded photos (first = cover, same as imageUrl); browser-resized data URLs in demo mode
   gallery?: string[];
   description?: string;

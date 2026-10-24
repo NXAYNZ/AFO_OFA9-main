@@ -43,11 +43,11 @@ const englishName = (thai: string) =>
   thai === 'กรุงเทพฯ' ? 'Bangkok' : PROVINCE_TRAVEL.find((p) => p.name === thai)?.nameEn ?? thai;
 
 const fieldClass =
-  'w-full h-12 px-3.5 rounded-xl border border-slate-300 bg-white text-sm font-semibold text-slate-900 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15 transition-all';
+  'w-full h-11 px-3 rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-colors';
 
 const Field: React.FC<{ label: string; children: React.ReactNode; className?: string }> = ({ label, children, className = '' }) => (
   <label className={`block ${className}`}>
-    <span className="block text-[11px] font-bold text-slate-500 mb-1">{label}</span>
+    <span className="block text-xs font-medium text-slate-600 mb-1.5">{label}</span>
     {children}
   </label>
 );
@@ -103,20 +103,20 @@ export const TravelSearchTabs: React.FC<TravelSearchTabsProps> = ({ onNavigate, 
   };
 
   const action: Record<TabId, { label: string; note: string; external?: boolean }> = {
-    hotels: { label: 'เทียบราคาที่พักด้วย AI', note: 'AI จัดแผนพร้อมเทียบราคาที่พัก • ใช้โควตา AI 1 ครั้ง' },
+    hotels: { label: 'เทียบราคาที่พักด้วย AI', note: 'AI จัดแผนพร้อมเทียบราคาที่พัก · ใช้โควตา AI 1 ครั้ง' },
     flights: { label: 'ค้นหาเที่ยวบิน', note: 'เปิดผลค้นหาใน Google Flights', external: true },
     trains: { label: 'จองตั๋วรถไฟ', note: 'ไปที่ระบบ D-Ticket ของการรถไฟแห่งประเทศไทย', external: true },
-    cars: { label: 'วางแผนทริปรถเช่าด้วย AI', note: 'AI คิดค่าเช่ารถ น้ำมัน และเส้นทางขับให้ • ใช้โควตา AI 1 ครั้ง' },
+    cars: { label: 'วางแผนทริปรถเช่าด้วย AI', note: 'AI คิดค่าเช่ารถ น้ำมัน และเส้นทางขับให้ · ใช้โควตา AI 1 ครั้ง' },
     attractions: { label: 'ดูที่เที่ยวบนแผนที่', note: 'แหล่งท่องเที่ยว 77 จังหวัด พร้อมรีวิวและความหนาแน่น' },
-    flight_hotel: { label: 'จัดแพ็กเกจบิน + พักด้วย AI', note: 'AI จัดแผนรวมเดินทางและที่พัก • ใช้โควตา AI 1 ครั้ง' },
+    flight_hotel: { label: 'จัดแพ็กเกจบิน + พักด้วย AI', note: 'AI จัดแผนรวมเดินทางและที่พัก · ใช้โควตา AI 1 ครั้ง' },
   };
   const current = action[tab];
 
   return (
-    <section className="rounded-3xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+    <section className="rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden">
       {/* Tab bar with sliding underline */}
       <div className="relative overflow-x-auto no-scrollbar border-b border-slate-200">
-        <div className="relative grid grid-cols-6 min-w-[640px]" role="tablist" aria-label="ประเภทการค้นหา">
+        <div className="relative grid grid-cols-6 min-w-[680px]" role="tablist" aria-label="ประเภทการค้นหา">
           {TABS.map((t) => {
             const Icon = t.icon;
             const on = t.id === tab;
@@ -126,19 +126,19 @@ export const TravelSearchTabs: React.FC<TravelSearchTabsProps> = ({ onNavigate, 
                 role="tab"
                 aria-selected={on}
                 onClick={() => setTab(t.id)}
-                className={`group flex flex-col items-center gap-1.5 pt-4 pb-3 transition-colors ${
-                  on ? 'text-indigo-600' : 'text-slate-600 hover:text-slate-900'
+                title={t.en}
+                className={`flex items-center justify-center gap-2 h-14 px-2 transition-colors ${
+                  on ? 'text-slate-900' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
-                <Icon className={`w-7 h-7 transition-transform duration-300 ${on ? 'scale-110' : 'group-hover:-translate-y-0.5'}`} strokeWidth={2.2} />
-                <span className="text-xs sm:text-sm font-bold whitespace-nowrap">{t.label}</span>
-                <span className="text-[10px] text-slate-400 hidden sm:block">{t.en}</span>
+                <Icon className={`w-[18px] h-[18px] shrink-0 ${on ? 'text-emerald-600' : ''}`} strokeWidth={on ? 2.2 : 1.8} />
+                <span className={`text-sm whitespace-nowrap ${on ? 'font-semibold' : 'font-medium'}`}>{t.label}</span>
               </button>
             );
           })}
           <span
             aria-hidden
-            className="absolute bottom-0 h-[3px] rounded-full bg-indigo-600 transition-transform duration-300 ease-out"
+            className="absolute bottom-0 h-0.5 bg-emerald-600 transition-transform duration-200 ease-out"
             style={{ width: `${100 / TABS.length}%`, transform: `translateX(${index * 100}%)` }}
           />
         </div>
@@ -186,20 +186,20 @@ export const TravelSearchTabs: React.FC<TravelSearchTabsProps> = ({ onNavigate, 
             </>
           )}
           <Field label={tab === 'hotels' ? 'ผู้เข้าพัก' : 'ผู้เดินทาง'} className={needsFrom ? 'lg:col-span-2' : 'lg:col-span-2'}>
-            <div className="h-12 flex items-center justify-between rounded-xl border border-slate-300 bg-white px-1.5">
+            <div className="h-11 flex items-center justify-between rounded-md border border-slate-300 bg-white px-1">
               <button
                 type="button"
                 onClick={() => setPeople((n) => Math.max(1, n - 1))}
-                className="w-8 h-8 rounded-lg text-slate-600 hover:bg-slate-100 flex items-center justify-center"
+                className="w-8 h-8 rounded text-slate-600 hover:bg-slate-100 flex items-center justify-center"
                 aria-label="ลดจำนวนคน"
               >
                 <Minus className="w-4 h-4" />
               </button>
-              <span className="text-sm font-bold text-slate-900">{people} คน</span>
+              <span className="text-sm font-semibold text-slate-900 tabular">{people} คน</span>
               <button
                 type="button"
                 onClick={() => setPeople((n) => Math.min(20, n + 1))}
-                className="w-8 h-8 rounded-lg text-slate-600 hover:bg-slate-100 flex items-center justify-center"
+                className="w-8 h-8 rounded text-slate-600 hover:bg-slate-100 flex items-center justify-center"
                 aria-label="เพิ่มจำนวนคน"
               >
                 <Plus className="w-4 h-4" />
@@ -209,10 +209,10 @@ export const TravelSearchTabs: React.FC<TravelSearchTabsProps> = ({ onNavigate, 
         </div>
 
         <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <p className="text-[11px] text-slate-500">{current.note}</p>
+          <p className="text-xs text-slate-500">{current.note}</p>
           <button
             type="submit"
-            className="btn-shine h-12 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-black shadow-md shadow-indigo-600/25 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 active:scale-[0.98]"
+            className="h-11 px-5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors active:bg-emerald-800"
           >
             <Search className="w-4 h-4" /> {current.label}
             {current.external && <ExternalLink className="w-3.5 h-3.5 opacity-80" />}

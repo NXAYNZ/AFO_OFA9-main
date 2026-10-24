@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Map as MapIcon,
   Search,
   X,
   Plus,
@@ -16,6 +15,8 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
+  Luggage,
+  Accessibility,
 } from 'lucide-react';
 import { useMapZoom, Bounds } from '@/lib/useMapZoom';
 import { placeImages } from '@/lib/placeImages';
@@ -49,7 +50,7 @@ interface BasketItem {
 // The AI planner accepts at most this many must-visit places
 const MAX_BASKET = 15;
 
-const DIM_FILL = '#eef2f6';
+const DIM_FILL = '#e9e7e0';
 
 const [, , MAP_W, MAP_H] = THAILAND_VIEWBOX.split(' ').map(Number);
 
@@ -256,43 +257,26 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-sky-100 text-sky-700">
-              <MapIcon className="w-5 h-5" />
-            </span>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900">แผนที่เที่ยวทั่วไทย 77 จังหวัด</h2>
-          </div>
-          <p className="mt-1.5 text-sm text-slate-500 max-w-2xl">
-            ชี้ที่จังหวัดเพื่อดูแหล่งท่องเที่ยวเด่น คลิกเพื่อดูรายละเอียด แล้วเลือกสถานที่ลง &ldquo;ทริปของฉัน&rdquo;
+          <h2 className="font-display text-3xl font-semibold text-slate-900">แผนที่เที่ยวทั่วไทย</h2>
+          <p className="mt-1.5 text-sm text-slate-600 max-w-2xl leading-relaxed">
+            <span className="font-medium text-slate-900">77 จังหวัด · {totalAttractions} แหล่งท่องเที่ยว · 5 ภูมิภาค</span> ชี้ที่จังหวัดเพื่อดูแหล่งท่องเที่ยวเด่น คลิกเพื่อดูรายละเอียด แล้วเลือกสถานที่ลง &ldquo;ทริปของฉัน&rdquo;
             เพื่อให้ AI วางแผน หรือเปิดเป็นทริปชุมชนได้ทันที
           </p>
-        </div>
-        <div className="flex gap-2 text-center">
-          {[
-            { value: '77', label: 'จังหวัด' },
-            { value: totalAttractions.toString(), label: 'แหล่งท่องเที่ยว' },
-            { value: '5', label: 'ภูมิภาค' },
-          ].map((stat) => (
-            <div key={stat.label} className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 shadow-sm">
-              <div className="text-lg font-black text-slate-900 leading-tight">{stat.value}</div>
-              <div className="text-[11px] text-slate-500">{stat.label}</div>
-            </div>
-          ))}
         </div>
       </div>
 
       {/* Filters */}
       <div className="space-y-3">
         <div className="relative max-w-md">
-          <div className="flex items-center gap-2 h-11 px-3.5 rounded-xl border border-slate-300 bg-white focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/15 transition-all">
+          <div className="flex items-center gap-2 h-11 px-3 rounded-md border border-slate-300 bg-white focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-colors">
             <Search className="w-4 h-4 text-slate-400 shrink-0" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="ค้นหาจังหวัดหรือสถานที่ เช่น ภูกระดึง, เกาะ, น่าน"
-              className="flex-1 min-w-0 bg-transparent text-sm outline-none text-slate-800 placeholder:text-slate-400"
+              className="flex-1 min-w-0 bg-transparent text-sm outline-none text-slate-800"
             />
             {query && (
               <button onClick={() => setQuery('')} className="text-slate-400 hover:text-slate-700" aria-label="ล้างคำค้นหา">
@@ -301,7 +285,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
             )}
           </div>
           {searchResults.length > 0 && (
-            <ul className="absolute z-20 left-0 right-0 mt-1.5 bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden animate-fadeIn">
+            <ul className="absolute z-20 left-0 right-0 mt-1.5 bg-white rounded-lg border border-slate-200 shadow-xl overflow-hidden animate-fadeIn">
               {searchResults.map((r) => (
                 <li key={`${r.province}-${r.label}`}>
                   <button
@@ -309,7 +293,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                       openProvince(r.province);
                       setQuery('');
                     }}
-                    className="w-full flex items-center justify-between gap-3 px-3.5 py-2 text-left text-sm hover:bg-emerald-50 transition-colors"
+                    className="w-full flex items-center justify-between gap-3 px-3.5 py-2 text-left text-sm hover:bg-slate-100 transition-colors"
                   >
                     <span className="flex items-center gap-2 min-w-0">
                       <MapPin className={`w-3.5 h-3.5 shrink-0 ${r.isProvince ? 'text-emerald-600' : 'text-slate-400'}`} />
@@ -326,17 +310,20 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
         <div className="flex flex-wrap gap-1.5">
           {(Object.keys(CATEGORY_META) as AttractionCategory[]).map((cat) => {
             const isOn = categoryFilter === cat;
+            const Icon = CATEGORY_META[cat].icon;
             return (
               <button
                 key={cat}
+                aria-pressed={isOn}
                 onClick={() => setCategoryFilter(isOn ? null : cat)}
-                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all duration-200 hover:-translate-y-0.5 ${
+                className={`h-8 px-2.5 rounded-md text-xs font-medium border inline-flex items-center gap-1.5 transition-colors duration-150 ${
                   isOn
-                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-500/25'
-                    : 'bg-white border-slate-200 text-slate-600 hover:border-emerald-300 hover:text-emerald-700'
+                    ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:text-ink-900'
+                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900'
                 }`}
               >
-                {CATEGORY_META[cat].emoji} {CATEGORY_META[cat].label}
+                <Icon className="w-3.5 h-3.5" strokeWidth={1.8} />
+                {CATEGORY_META[cat].label}
               </button>
             );
           })}
@@ -348,7 +335,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                 setCategoryFilter(null);
                 setQuery('');
               }}
-              className="px-2.5 py-1 rounded-full text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
+              className="h-8 px-2.5 rounded-md text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
             >
               ล้างตัวกรอง
             </button>
@@ -358,7 +345,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-6 items-start">
         {/* MAP */}
-        <div className="rounded-3xl bg-gradient-to-b from-sky-50 to-white border border-slate-200 shadow-sm p-4 sm:p-6">
+        <div className="rounded-xl bg-sky-50 border border-slate-200 p-4 sm:p-6">
           <div className="flex flex-wrap gap-1.5 mb-3">
             {REGION_ORDER.map((region) => {
               const meta = REGION_META[region];
@@ -367,12 +354,13 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                 <button
                   key={region}
                   onClick={() => toggleRegion(region)}
-                  className={`on-light flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all duration-200 hover:-translate-y-0.5 ${
-                    isOn ? 'border-slate-800 text-slate-900 shadow-md' : 'border-transparent text-slate-600 hover:border-slate-300'
+                  aria-pressed={isOn}
+                  className={`on-light flex items-center gap-1.5 h-8 px-2.5 rounded-md text-xs font-semibold border transition-colors duration-150 ${
+                    isOn ? 'border-slate-900 text-slate-900' : 'border-transparent text-slate-700 hover:border-slate-400'
                   }`}
                   style={{ backgroundColor: meta.fill }}
                 >
-                  {meta.emoji} {meta.label}
+                  {meta.label}
                 </button>
               );
             })}
@@ -419,7 +407,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                 <path
                   d={selectedShape.d}
                   fill="none"
-                  stroke="#dc2626"
+                  stroke="#126c61"
                   strokeWidth={2.2}
                   strokeLinejoin="round"
                   vectorEffect="non-scaling-stroke"
@@ -433,7 +421,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                   d={hoveredShape.d}
                   className="map-province-hover"
                   fill={REGION_META[travelByName.get(hoveredShape.name)!.region].hover}
-                  stroke="#0f172a"
+                  stroke="#13233a"
                   strokeOpacity={0.55}
                   strokeWidth={1.2}
                   strokeLinejoin="round"
@@ -456,8 +444,8 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                       textAnchor="middle"
                       dominantBaseline="middle"
                       fontSize={px / k}
-                      fontWeight={700}
-                      fill="#1e293b"
+                      fontWeight={600}
+                      fill="#13233a"
                       stroke="#ffffff"
                       strokeWidth={(px * 0.28) / k}
                       paintOrder="stroke"
@@ -477,7 +465,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                   y={y}
                   textAnchor="middle"
                   fontWeight={700}
-                  fill="#334155"
+                  fill="#343e4f"
                   stroke="#ffffff"
                   strokeWidth={3}
                   paintOrder="stroke"
@@ -486,7 +474,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                   opacity={k >= LABEL_MIN_SCALE ? 0 : hovered ? 0.35 : 0.9}
                   style={{ transition: 'opacity 0.2s' }}
                 >
-                  {REGION_META[region].emoji} {REGION_META[region].label}
+                  {REGION_META[region].label}
                 </text>
               ))}
 
@@ -498,8 +486,8 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                   // Markers keep a constant on-screen size at any zoom
                   <g key={name} pointerEvents="none" transform={`translate(${s.cx} ${s.cy}) scale(${1 / k})`}>
                     {/* Offset so the selected-province pin does not cover it */}
-                    <circle cx={9} cy={-9} r={7} fill="#4f46e5" stroke="#fff" strokeWidth={1.5} />
-                    <text x={9} y={-6} textAnchor="middle" fontSize={8} fontWeight={800} fill="#fff">
+                    <circle cx={9} cy={-9} r={7} fill="#1a7d71" stroke="#fff" strokeWidth={1.5} />
+                    <text x={9} y={-6} textAnchor="middle" fontSize={8} fontWeight={700} fill="#fff">
                       {count}
                     </text>
                   </g>
@@ -511,9 +499,9 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                 <path
                   key={`crown-outline-${name}`}
                   d={shapeByName.get(name)!.d}
-                  fill="#fde68a"
+                  fill="#edcb8e"
                   fillOpacity={0.35}
-                  stroke="#f59e0b"
+                  stroke="#c27f1e"
                   strokeWidth={2.4}
                   strokeLinejoin="round"
                   vectorEffect="non-scaling-stroke"
@@ -528,20 +516,20 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                     <g className="map-crown">
                       <path
                         d="M-11 -6 L-13 -20 L-6 -13 L0 -24 L6 -13 L13 -20 L11 -6 Z"
-                        fill="#facc15"
-                        stroke="#b45309"
+                        fill="#e2ae57"
+                        stroke="#855215"
                         strokeWidth={1.2}
                         strokeLinejoin="round"
                       />
-                      <rect x={-11} y={-7} width={22} height={4} rx={1} fill="#f59e0b" stroke="#b45309" strokeWidth={1} />
-                      <circle cx={0} cy={-24} r={1.8} fill="#ef4444" />
-                      <circle cx={-13} cy={-20} r={1.4} fill="#ef4444" />
-                      <circle cx={13} cy={-20} r={1.4} fill="#ef4444" />
+                      <rect x={-11} y={-7} width={22} height={4} rx={1} fill="#c27f1e" stroke="#855215" strokeWidth={1} />
+                      <circle cx={0} cy={-24} r={1.8} fill="#bc4d36" />
+                      <circle cx={-13} cy={-20} r={1.4} fill="#bc4d36" />
+                      <circle cx={13} cy={-20} r={1.4} fill="#bc4d36" />
                     </g>
                     {ranks.map((rank, j) => (
                       <g key={rank} transform={`translate(${-badgesW / 2 + 5 + j * 13} 5)`}>
                         <circle r={6} fill={RANK_COLORS[rank]} stroke="#fff" strokeWidth={1.5} />
-                        <text y={3} textAnchor="middle" fontSize={8} fontWeight={900} fill="#fff">
+                        <text y={3} textAnchor="middle" fontSize={8} fontWeight={700} fill="#fff">
                           {rank + 1}
                         </text>
                       </g>
@@ -554,16 +542,16 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
               {selectedShape && (
                 <g pointerEvents="none" transform={`translate(${selectedShape.cx} ${selectedShape.cy}) scale(${1 / k})`}>
                   {/* Target ripple on the ground */}
-                  <ellipse cx={0} cy={0} rx={6} ry={2.5} fill="none" stroke="#dc2626" strokeWidth={1.5}>
+                  <ellipse cx={0} cy={0} rx={6} ry={2.5} fill="none" stroke="#126c61" strokeWidth={1.5}>
                     <animate attributeName="rx" values="4;16;4" dur="1.8s" repeatCount="indefinite" />
                     <animate attributeName="ry" values="1.6;6;1.6" dur="1.8s" repeatCount="indefinite" />
                     <animate attributeName="opacity" values="0.8;0;0.8" dur="1.8s" repeatCount="indefinite" />
                   </ellipse>
-                  <ellipse cx={0} cy={0} rx={4} ry={1.6} fill="#7f1d1d" opacity={0.35} />
+                  <ellipse cx={0} cy={0} rx={4} ry={1.6} fill="#0b3a35" opacity={0.35} />
                   {/* Re-keyed per province so the flag drops in again on each new pick */}
                   <g key={selectedShape.name} className="map-flag-drop">
-                    <line x1={0} y1={0} x2={0} y2={-26} stroke="#334155" strokeWidth={1.8} strokeLinecap="round" />
-                    <path d="M1 -26 Q8 -29 15 -25 T26 -22 L26 -12 Q19 -15 13 -12 T1 -14 Z" fill="#dc2626" stroke="#fff" strokeWidth={1}>
+                    <line x1={0} y1={0} x2={0} y2={-26} stroke="#343e4f" strokeWidth={1.8} strokeLinecap="round" />
+                    <path d="M1 -26 Q8 -29 15 -25 T26 -22 L26 -12 Q19 -15 13 -12 T1 -14 Z" fill="#1a7d71" stroke="#fff" strokeWidth={1}>
                       <animate
                         attributeName="d"
                         dur="1.2s"
@@ -571,15 +559,15 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                         values="M1 -26 Q8 -29 15 -25 T26 -22 L26 -12 Q19 -15 13 -12 T1 -14 Z;M1 -26 Q8 -23 15 -26 T26 -24 L26 -14 Q19 -11 13 -14 T1 -14 Z;M1 -26 Q8 -29 15 -25 T26 -22 L26 -12 Q19 -15 13 -12 T1 -14 Z"
                       />
                     </path>
-                    <circle cx={0} cy={-27} r={1.8} fill="#facc15" stroke="#fff" strokeWidth={0.6} />
+                    <circle cx={0} cy={-27} r={1.8} fill="#e2ae57" stroke="#fff" strokeWidth={0.6} />
                   </g>
                   <text
                     x={0}
                     y={-33}
                     textAnchor="middle"
                     fontSize={12}
-                    fontWeight={800}
-                    fill="#7f1d1d"
+                    fontWeight={700}
+                    fill="#0b3a35"
                     stroke="#fff"
                     strokeWidth={3}
                     paintOrder="stroke"
@@ -591,10 +579,10 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
             </svg>
 
             {/* Zoom controls */}
-            <div className="absolute top-2 right-2 flex flex-col rounded-xl bg-white/95 border border-slate-200 shadow-md overflow-hidden">
+            <div className="absolute top-2 right-2 flex flex-col rounded-md bg-white border border-slate-200 shadow-md overflow-hidden">
               <button
                 onClick={() => zoom.zoomBy(1.6)}
-                className="w-9 h-9 flex items-center justify-center text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+                className="w-9 h-9 flex items-center justify-center text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                 aria-label="ซูมเข้า"
               >
                 <ZoomIn className="w-4 h-4" />
@@ -602,7 +590,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
               <button
                 onClick={() => zoom.zoomBy(1 / 1.6)}
                 disabled={k <= 1.01}
-                className="w-9 h-9 flex items-center justify-center border-t border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                className="w-9 h-9 flex items-center justify-center border-t border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
                 aria-label="ซูมออก"
               >
                 <ZoomOut className="w-4 h-4" />
@@ -610,20 +598,20 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
               <button
                 onClick={zoom.reset}
                 disabled={k <= 1.01}
-                className="w-9 h-9 flex items-center justify-center border-t border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                className="w-9 h-9 flex items-center justify-center border-t border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
                 aria-label="ดูทั้งประเทศ"
               >
                 <Maximize2 className="w-4 h-4" />
               </button>
             </div>
-            <div className="absolute bottom-2 left-2 text-[11px] text-slate-500 bg-white/80 rounded-lg px-2 py-1 pointer-events-none">
-              {k > 1.01 ? `ซูม ${k.toFixed(1)}x • ลากเพื่อเลื่อนแผนที่` : 'เลื่อนลูกกลิ้งเมาส์หรือกด + เพื่อซูมดูจังหวัด'}
+            <div className="absolute bottom-2 left-2 text-[11px] text-slate-600 bg-white/85 rounded px-2 py-1 pointer-events-none">
+              {k > 1.01 ? `ซูม ${k.toFixed(1)}x · ลากเพื่อเลื่อนแผนที่` : 'เลื่อนลูกกลิ้งเมาส์หรือกด + เพื่อซูมดูจังหวัด'}
             </div>
 
             {/* Hover tooltip */}
             {hoveredTravel && (
               <div
-                className="hidden md:block absolute z-10 w-64 pointer-events-none rounded-2xl bg-white/95 backdrop-blur border border-slate-200 shadow-xl overflow-hidden animate-fadeIn"
+                className="hidden md:block absolute z-10 w-64 pointer-events-none rounded-lg bg-white border border-slate-200 shadow-xl overflow-hidden animate-fadeIn"
                 style={{
                   left: tooltipPos.flip ? tooltipPos.x - 272 : tooltipPos.x + 16,
                   top: Math.max(0, Math.min(tooltipPos.y - 20, hoverPhoto ? tooltipPos.maxTop : Infinity)),
@@ -642,19 +630,19 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                         setHoverPhoto(null);
                       }}
                     />
-                    <div className="absolute inset-x-0 bottom-0 px-2.5 py-1.5 bg-gradient-to-t from-black/70 to-transparent text-[11px] font-semibold text-white truncate">
-                      📍 {hoverPhoto.place}
+                    <div className="absolute inset-x-0 bottom-0 px-2.5 py-1.5 bg-gradient-to-t from-black/70 to-transparent text-[11px] font-semibold text-white truncate flex items-center gap-1">
+                      <MapPin className="w-3 h-3 shrink-0" /> {hoverPhoto.place}
                     </div>
                   </div>
                 )}
                 <div className="p-3.5">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="font-extrabold text-slate-900 leading-tight">{hoveredTravel.name}</div>
+                    <div className="font-display text-lg font-semibold text-slate-900 leading-tight">{hoveredTravel.name}</div>
                     <div className="text-[11px] text-slate-500">{hoveredTravel.nameEn}</div>
                   </div>
                   <span
-                    className="on-light text-[10px] font-bold px-1.5 py-0.5 rounded-md text-slate-700 shrink-0"
+                    className="on-light text-[11px] font-semibold px-1.5 py-0.5 rounded text-slate-700 shrink-0"
                     style={{ backgroundColor: REGION_META[hoveredTravel.region].fill }}
                   >
                     {REGION_META[hoveredTravel.region].label}
@@ -663,24 +651,24 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                 <ul className="mt-2.5 space-y-1">
                   {hoveredTravel.attractions.slice(0, 5).map((a) => (
                     <li key={a.name} className="flex items-center gap-1.5 text-xs text-slate-700">
-                      <span>{CATEGORY_META[a.category].emoji}</span>
+                      {React.createElement(CATEGORY_META[a.category].icon, { className: 'w-3.5 h-3.5 text-slate-400 shrink-0', strokeWidth: 1.8 })}
                       <span className={categoryFilter === a.category ? 'font-bold text-emerald-700' : ''}>{a.name}</span>
                       {(() => {
                         const access = accessibilityOf(hoveredTravel.name, a.name);
                         return access && access.wheelchair !== 'no' ? (
                           <span
-                            className="ml-auto shrink-0 w-4 h-4 rounded text-[10px] leading-none text-white flex items-center justify-center"
+                            className="ml-auto shrink-0 w-4 h-4 rounded text-white flex items-center justify-center"
                             style={{ backgroundColor: WHEELCHAIR_META[access.wheelchair].color }}
                             title={WHEELCHAIR_META[access.wheelchair].label}
                           >
-                            ♿
+                            <Accessibility className="w-3 h-3" />
                           </span>
                         ) : null;
                       })()}
                     </li>
                   ))}
                 </ul>
-                <div className="mt-2.5 pt-2 border-t border-slate-100 text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+                <div className="mt-2.5 pt-2 border-t border-slate-100 text-xs text-emerald-700 font-medium flex items-center gap-1">
                   <MousePointerClick className="w-3.5 h-3.5" />
                   คลิกเพื่อดูรูป อากาศ งบ & คนเยอะไหม
                 </div>
@@ -688,11 +676,11 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
               </div>
             )}
           </div>
-          <p className="mt-2 text-[10px] text-slate-400 text-right">ขอบเขตจังหวัด: OpenGISData-Thailand</p>
+          <p className="mt-2 text-[11px] text-slate-500 text-right">ขอบเขตจังหวัด: OpenGISData-Thailand</p>
         </div>
 
         {/* SIDE PANEL */}
-        <div className="space-y-4 lg:sticky lg:top-20">
+        <div className="space-y-4 lg:sticky lg:top-24">
           {regionFilter ? (
             <RegionTopPanel
               region={regionFilter}
@@ -703,19 +691,18 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
               onBack={() => toggleRegion(regionFilter)}
             />
           ) : selectedTravel ? (
-            <div key={selectedTravel.name} className="rounded-3xl bg-white border border-slate-200 shadow-sm overflow-hidden animate-fadeIn">
+            <div key={selectedTravel.name} className="rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden animate-fadeIn">
               <div className="on-light px-5 pt-5 pb-4" style={{ backgroundColor: REGION_META[selectedTravel.region].fill }}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-xs font-bold text-slate-600">
-                      {REGION_META[selectedTravel.region].emoji} {REGION_META[selectedTravel.region].label}
+                    <h3 className="font-display text-3xl font-semibold text-slate-900 leading-tight">{selectedTravel.name}</h3>
+                    <div className="text-xs text-slate-700">
+                      {selectedTravel.nameEn} · {REGION_META[selectedTravel.region].label}
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 leading-tight">{selectedTravel.name}</h3>
-                    <div className="text-xs text-slate-600">{selectedTravel.nameEn}</div>
                   </div>
                   <button
                     onClick={() => setSelected(null)}
-                    className="w-8 h-8 rounded-full bg-white/60 hover:bg-white flex items-center justify-center text-slate-600 transition-all hover:rotate-90"
+                    className="w-8 h-8 rounded-md hover:bg-black/5 flex items-center justify-center text-slate-600 transition-colors"
                     aria-label="ปิด"
                   >
                     <X className="w-4 h-4" />
@@ -723,14 +710,14 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                 </div>
                 <button
                   onClick={() => setDetailProvince(selectedTravel.name)}
-                  className="mt-3 h-9 px-3.5 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center gap-1.5 hover:bg-emerald-700 transition-all hover:-translate-y-0.5"
+                  className="mt-4 h-9 px-3.5 rounded-md bg-ink-900 text-white text-xs font-semibold flex items-center gap-1.5 hover:bg-ink-800 transition-colors"
                 >
                   <MapPin className="w-3.5 h-3.5" /> ดูรูป อากาศ งบประมาณ & ความหนาแน่น
                 </button>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {Array.from(new Set(selectedTravel.attractions.map((a) => a.category))).map((cat) => (
-                    <span key={cat} className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-white/70 text-slate-700">
-                      {CATEGORY_META[cat].emoji} {CATEGORY_META[cat].label}
+                    <span key={cat} className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded bg-white/60 text-slate-700">
+                      {React.createElement(CATEGORY_META[cat].icon, { className: 'w-3 h-3', strokeWidth: 1.8 })} {CATEGORY_META[cat].label}
                     </span>
                   ))}
                 </div>
@@ -738,7 +725,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
 
               <div className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-bold text-slate-800">
+                  <span className="text-sm font-semibold text-slate-900">
                     แหล่งท่องเที่ยวเด่น ({selectedTravel.attractions.length})
                   </span>
                   <button
@@ -748,38 +735,36 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                     + เพิ่มทั้งหมด
                   </button>
                 </div>
-                <ul className="space-y-1.5">
+                <ul className="divide-y divide-slate-100 border-y border-slate-100">
                   {selectedTravel.attractions.map((a) => {
                     const added = inBasket(a.name, selectedTravel.name);
                     return (
                       <li
                         key={a.name}
-                        className={`group flex items-center gap-3 p-2.5 rounded-xl border transition-all duration-200 ${
-                          added ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 hover:border-emerald-200 hover:bg-slate-50'
-                        }`}
+                        className={`group flex items-center gap-3 py-2.5 transition-colors ${added ? 'bg-emerald-50/70' : ''}`}
                       >
-                        <span className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-lg shrink-0 transition-transform group-hover:scale-110">
-                          {CATEGORY_META[a.category].emoji}
+                        <span className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${added ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                          {React.createElement(CATEGORY_META[a.category].icon, { className: 'w-4 h-4', strokeWidth: 1.8 })}
                         </span>
                         <span className="flex-1 min-w-0">
-                          <span className="block text-sm font-semibold text-slate-800 truncate">{a.name}</span>
-                          <span className="block text-[11px] text-slate-500">{CATEGORY_META[a.category].label}</span>
+                          <span className="block text-sm font-medium text-slate-900 truncate">{a.name}</span>
+                          <span className="block text-xs text-slate-500">{CATEGORY_META[a.category].label}</span>
                         </span>
                         <a
                           href={mapsSearchUrl(a.name, selectedTravel.name)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-colors"
+                          className="p-1.5 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                           title="ดูใน Google Maps"
                         >
                           <ExternalLink className="w-4 h-4" />
                         </a>
                         <button
                           onClick={() => toggleBasket(a.name, selectedTravel.name)}
-                          className={`h-8 px-2.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all active:scale-95 ${
+                          className={`h-8 px-2.5 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors ${
                             added
-                              ? 'bg-emerald-600 text-white hover:bg-rose-500'
-                              : 'bg-white border border-slate-300 text-slate-700 hover:border-emerald-500 hover:text-emerald-700'
+                              ? 'bg-emerald-600 text-white hover:bg-rose-600'
+                              : 'bg-white border border-slate-300 text-slate-700 hover:border-emerald-600 hover:text-emerald-700'
                           }`}
                         >
                           {added ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
@@ -791,7 +776,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                 </ul>
                 <button
                   onClick={() => onPlanWithAi(selectedTravel.name, basket.filter((b) => b.province === selectedTravel.name).map((b) => b.name))}
-                  className="btn-shine mt-4 w-full h-11 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-md shadow-emerald-500/25 transition-all hover:-translate-y-0.5"
+                  className="mt-4 w-full h-11 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
                 >
                   <Sparkles className="w-4 h-4" />
                   ให้ AI วางแผนเที่ยว{selectedTravel.name}
@@ -799,8 +784,8 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
               </div>
             </div>
           ) : (
-            <div className="rounded-3xl bg-white border border-slate-200 shadow-sm p-5 animate-fadeIn">
-              <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
+            <div className="rounded-xl bg-white border border-slate-200 shadow-sm p-5 animate-fadeIn">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                 <MousePointerClick className="w-4 h-4 text-emerald-600" />
                 เริ่มจากคลิกจังหวัดบนแผนที่
               </div>
@@ -813,18 +798,16 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                     <button
                       key={region}
                       onClick={() => toggleRegion(region)}
-                      className="region-card on-light group w-full text-left p-3 rounded-2xl border border-slate-200 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                      className="region-card on-light group w-full text-left px-3.5 py-3 rounded-md border border-slate-200 hover:border-slate-400 transition-colors"
                       style={{ '--region-fill': meta.fill } as React.CSSProperties}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-slate-800">
-                          <span className="inline-block transition-transform group-hover:scale-125">{meta.emoji}</span> {meta.label}
-                        </span>
+                        <span className="text-sm font-semibold text-slate-900">{meta.label}</span>
                         <span className="text-[11px] text-slate-500">
-                          {provinces.length} จังหวัด • {provinces.reduce((s, p) => s + p.attractions.length, 0)} ที่
+                          {provinces.length} จังหวัด · {provinces.reduce((s, p) => s + p.attractions.length, 0)} ที่
                         </span>
                       </div>
-                      <div className="mt-0.5 text-xs text-slate-500">{meta.desc}</div>
+                      <div className="mt-0.5 text-xs text-slate-600">{meta.desc}</div>
                     </button>
                   );
                 })}
@@ -833,11 +816,12 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
           )}
 
           {/* Trip basket */}
-          <div className="rounded-3xl bg-slate-900 text-white p-5 shadow-lg">
+          <div className="rounded-xl bg-ink-900 text-white p-5">
             <div className="flex items-center justify-between">
-              <div className="font-bold flex items-center gap-2">
-                🧳 ทริปของฉัน
-                <span className="text-xs font-mono px-1.5 py-0.5 rounded-md bg-white/15">
+              <div className="font-semibold flex items-center gap-2">
+                <Luggage className="w-4 h-4 text-lagoon-300" />
+                ทริปของฉัน
+                <span className="text-xs font-mono text-ink-300">
                   {basket.length}/{MAX_BASKET}
                 </span>
               </div>
@@ -847,7 +831,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                     setBasket([]);
                     setBasketFullMsg(false);
                   }}
-                  className="text-xs text-slate-300 hover:text-rose-300 flex items-center gap-1 transition-colors"
+                  className="text-xs text-ink-300 hover:text-terracotta-300 flex items-center gap-1 transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" /> ล้าง
                 </button>
@@ -855,7 +839,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
             </div>
 
             {basket.length === 0 ? (
-              <p className="mt-2 text-xs text-slate-400">ยังไม่ได้เลือกสถานที่ กด &ldquo;เพิ่ม&rdquo; จากรายการของแต่ละจังหวัด (เลือกข้ามจังหวัดได้)</p>
+              <p className="mt-2 text-xs text-ink-300 leading-relaxed">ยังไม่ได้เลือกสถานที่ กด &ldquo;เพิ่ม&rdquo; จากรายการของแต่ละจังหวัด (เลือกข้ามจังหวัดได้)</p>
             ) : (
               <>
                 <div className="mt-3 space-y-2 max-h-56 overflow-y-auto pr-1">
@@ -863,7 +847,7 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                     <div key={province}>
                       <button
                         onClick={() => setSelected(province)}
-                        className="text-[11px] font-bold text-slate-400 hover:text-white transition-colors"
+                        className="text-[11px] font-semibold text-ink-300 hover:text-white transition-colors"
                       >
                         จ.{province}
                       </button>
@@ -873,15 +857,15 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                           .map((b) => (
                             <span
                               key={b.name}
-                              className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-2 py-1 text-xs animate-fadeIn"
+                              className="inline-flex items-center gap-1 rounded bg-white/10 pl-2 pr-1 py-1 text-xs animate-fadeIn"
                             >
                               {b.name}
                               <button
                                 onClick={() => toggleBasket(b.name, b.province)}
-                                className="text-slate-400 hover:text-rose-300"
+                                className="p-0.5 rounded text-ink-300 hover:text-white hover:bg-white/10"
                                 aria-label={`เอา ${b.name} ออก`}
                               >
-                                ×
+                                <X className="w-3 h-3" />
                               </button>
                             </span>
                           ))}
@@ -890,21 +874,21 @@ export const ThailandMapTab: React.FC<ThailandMapTabProps> = ({ onPlanWithAi, on
                   ))}
                 </div>
                 {basketFullMsg && (
-                  <p className="mt-2 text-[11px] text-amber-300">เลือกได้สูงสุด {MAX_BASKET} สถานที่ต่อทริป</p>
+                  <p className="mt-2 text-xs text-saffron-300">เลือกได้สูงสุด {MAX_BASKET} สถานที่ต่อทริป</p>
                 )}
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-2">
                   <button
                     onClick={handlePlanWithAi}
-                    className="btn-shine h-11 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 text-sm font-bold flex items-center justify-center gap-1.5 transition-all hover:-translate-y-0.5"
+                    className="h-11 rounded-md bg-lagoon-500 hover:bg-lagoon-400 text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
                   >
                     <Sparkles className="w-4 h-4" />
                     ให้ AI วางแผน
                   </button>
                   <button
                     onClick={handleCreateTrip}
-                    className="h-11 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-sm font-bold flex items-center justify-center gap-1.5 transition-all hover:-translate-y-0.5"
+                    className="h-11 rounded-md border border-white/25 hover:bg-white/10 text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
                   >
-                    <Users className="w-4 h-4 text-indigo-300" />
+                    <Users className="w-4 h-4" />
                     เปิดเป็นทริปชุมชน
                   </button>
                 </div>

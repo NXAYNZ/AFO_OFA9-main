@@ -74,11 +74,11 @@ export const estimateBudget = (p: ProvinceTravel, days: number, people: number):
 // ---------------- Crowd estimate ----------------
 
 export const CROWD_LEVELS = [
-  { label: 'เงียบ', color: '#10b981' },
-  { label: 'คนน้อย', color: '#84cc16' },
-  { label: 'ปานกลาง', color: '#eab308' },
-  { label: 'ค่อนข้างแน่น', color: '#f97316' },
-  { label: 'หนาแน่นมาก', color: '#ef4444' },
+  { label: 'เงียบ', color: '#126c61' },
+  { label: 'คนน้อย', color: '#3f7d5c' },
+  { label: 'ปานกลาง', color: '#a66817' },
+  { label: 'ค่อนข้างแน่น', color: '#b4552f' },
+  { label: 'หนาแน่นมาก', color: '#a13d29' },
 ];
 
 // Relative busyness by hour (0-23) for each kind of place
