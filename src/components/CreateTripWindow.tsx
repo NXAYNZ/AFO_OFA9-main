@@ -7,15 +7,22 @@ import {
   ImagePlus,
   Star,
   Trash2,
-  MapPin,
-  X,
   ShieldCheck,
   BadgeCheck,
   Loader2,
   AlertTriangle,
+  Sliders,
+  Utensils,
+  Home,
+  Compass,
+  Car,
+  MapPin,
+  X,
 } from 'lucide-react';
 import { CommunityTrip, SubscriptionTier, TIER_CONFIGS, UserProfile } from '@/lib/types';
 import { TripTicket } from '@/components/TripTicket';
+import { estimateBudget } from '@/lib/tripEstimates';
+import { resolveProvinceTravel } from '@/lib/tripPrompt';
 
 export interface TripSeed {
   title: string;
@@ -78,6 +85,10 @@ export const CreateTripWindow: React.FC<CreateTripWindowProps> = ({
   const [slots, setSlots] = useState(6);
   const [cost, setCost] = useState(2500);
   const [deposit, setDeposit] = useState(1000);
+  const [foodRatio, setFoodRatio] = useState<number>(40);
+  const [lodgingRatio, setLodgingRatio] = useState<number>(35);
+  const [activityRatio, setActivityRatio] = useState<number>(15);
+  const [transportRatio, setTransportRatio] = useState<number>(10);
   const [description, setDescription] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [processing, setProcessing] = useState(false);
@@ -365,10 +376,23 @@ export const CreateTripWindow: React.FC<CreateTripWindowProps> = ({
             </label>
           </section>
 
-          {/* Money */}
-          <section className="rounded-lg bg-white border border-slate-200 p-5 sm:p-6">
-            <h2 className="font-display text-lg font-semibold text-slate-900">ค่าใช้จ่ายและมัดจำ Escrow</h2>
-            <div className="mt-4 grid grid-cols-3 gap-3">
+          {/* Money & Interactive Budget Slider */}
+          <section className="rounded-lg bg-white border border-slate-200 p-5 sm:p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+              <h2 className="font-display text-lg font-semibold text-slate-900">ค่าใช้จ่ายและมัดจำ Escrow</h2>
+              {(() => {
+                const prov = resolveProvinceTravel(destination);
+                const benchmark = prov ? estimateBudget(prov, 2, slots) : null;
+                const standardTotal = benchmark?.tiers.find((t) => t.tier === 'standard')?.total || 3500;
+                return (
+                  <span className="text-xs text-slate-500">
+                    มาตรฐาน {prov?.name || destination}: ~฿{standardTotal.toLocaleString()}/คน (2 วัน 1 คืน)
+                  </span>
+                );
+              })()}
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
               <label className="block">
                 <span className="block text-sm font-medium text-slate-700 mb-1.5">จำนวนคน</span>
                 <input
@@ -388,7 +412,7 @@ export const CreateTripWindow: React.FC<CreateTripWindowProps> = ({
                   step={500}
                   value={cost}
                   onChange={(e) => setCost(Math.max(0, parseInt(e.target.value) || 0))}
-                  className={`${inputClass} font-mono`}
+                  className={`${inputClass} font-mono font-semibold`}
                 />
               </label>
               <label className="block">
@@ -399,10 +423,112 @@ export const CreateTripWindow: React.FC<CreateTripWindowProps> = ({
                   step={200}
                   value={deposit}
                   onChange={(e) => setDeposit(Math.max(0, parseInt(e.target.value) || 0))}
-                  className={`${inputClass} font-mono`}
+                  className={`${inputClass} font-mono font-semibold text-emerald-700`}
                 />
               </label>
             </div>
+
+            {/* Interactive Budget Allocation Sliders */}
+            <div className="pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-between text-xs font-semibold text-slate-900 mb-3">
+                <span className="flex items-center gap-1.5">
+                  <Sliders className="w-3.5 h-3.5 text-slate-500" />
+                  สัดส่วนการใช้งบประมาณต่อคน (Live Cost Breakdown)
+                </span>
+                <span className="font-mono text-slate-500">ยอดรวม: ฿{cost.toLocaleString()}</span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                {/* Food */}
+                <div className="p-3 rounded-lg bg-amber-50/60 border border-amber-200/80">
+                  <div className="flex items-center justify-between text-amber-900 font-medium">
+                    <span className="flex items-center gap-1">
+                      <Utensils className="w-3 h-3 text-amber-600" /> อาหาร
+                    </span>
+                    <span className="font-mono font-bold">{foodRatio}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={10}
+                    max={70}
+                    step={5}
+                    value={foodRatio}
+                    onChange={(e) => setFoodRatio(Number(e.target.value))}
+                    className="w-full mt-2 accent-amber-600 cursor-pointer"
+                  />
+                  <div className="mt-1 font-mono font-semibold text-amber-950">
+                    ฿{Math.round((cost * foodRatio) / 100).toLocaleString()}
+                  </div>
+                </div>
+
+                {/* Lodging */}
+                <div className="p-3 rounded-lg bg-indigo-50/60 border border-indigo-200/80">
+                  <div className="flex items-center justify-between text-indigo-900 font-medium">
+                    <span className="flex items-center gap-1">
+                      <Home className="w-3 h-3 text-indigo-600" /> ที่พัก
+                    </span>
+                    <span className="font-mono font-bold">{lodgingRatio}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={10}
+                    max={70}
+                    step={5}
+                    value={lodgingRatio}
+                    onChange={(e) => setLodgingRatio(Number(e.target.value))}
+                    className="w-full mt-2 accent-indigo-600 cursor-pointer"
+                  />
+                  <div className="mt-1 font-mono font-semibold text-indigo-950">
+                    ฿{Math.round((cost * lodgingRatio) / 100).toLocaleString()}
+                  </div>
+                </div>
+
+                {/* Activities */}
+                <div className="p-3 rounded-lg bg-emerald-50/60 border border-emerald-200/80">
+                  <div className="flex items-center justify-between text-emerald-900 font-medium">
+                    <span className="flex items-center gap-1">
+                      <Compass className="w-3 h-3 text-emerald-600" /> กิจกรรม
+                    </span>
+                    <span className="font-mono font-bold">{activityRatio}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={5}
+                    max={50}
+                    step={5}
+                    value={activityRatio}
+                    onChange={(e) => setActivityRatio(Number(e.target.value))}
+                    className="w-full mt-2 accent-emerald-600 cursor-pointer"
+                  />
+                  <div className="mt-1 font-mono font-semibold text-emerald-950">
+                    ฿{Math.round((cost * activityRatio) / 100).toLocaleString()}
+                  </div>
+                </div>
+
+                {/* Transport */}
+                <div className="p-3 rounded-lg bg-slate-100 border border-slate-300">
+                  <div className="flex items-center justify-between text-slate-800 font-medium">
+                    <span className="flex items-center gap-1">
+                      <Car className="w-3 h-3 text-slate-600" /> เดินทาง
+                    </span>
+                    <span className="font-mono font-bold">{transportRatio}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={5}
+                    max={40}
+                    step={5}
+                    value={transportRatio}
+                    onChange={(e) => setTransportRatio(Number(e.target.value))}
+                    className="w-full mt-2 accent-slate-700 cursor-pointer"
+                  />
+                  <div className="mt-1 font-mono font-semibold text-slate-900">
+                    ฿{Math.round((cost * transportRatio) / 100).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <p className="mt-3 text-xs text-slate-500 flex items-start gap-1.5 leading-relaxed">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
               เงินมัดจำของทุกคนถูกล็อกใน Escrow จนถึงวันเดินทาง ใครเทโดนหัก 10% (5% แพลตฟอร์ม + 5% ชดเชยเพื่อนในกลุ่ม)

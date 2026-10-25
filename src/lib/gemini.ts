@@ -5,8 +5,16 @@ import {
   SubscriptionTier,
   WeatherForecast,
   TripPreferences,
+  ActivityItem,
+  TripDayPlan,
 } from './types';
-import { buildPreferencePrompt, preferenceNotes, transportLabel } from './tripPrompt';
+import {
+  buildPreferencePrompt,
+  preferenceNotes,
+  transportLabel,
+  buildGroundedContext,
+} from './tripPrompt';
+import { optimizeDailyRoute, calculateTripFeasibility } from './tripOptimizer';
 import { SAMPLE_KOH_SAMET_PLANS, SAMPLE_OTA_COMPARISONS } from './mockData';
 
 export interface GenerateTripPlanParams {
@@ -30,11 +38,13 @@ export interface GeneratedTripResult {
 
 /**
  * Fallback generator for instant, ultra-realistic Thai trip plans without waiting for API keys
+ * Grounded with real attractions from thailandTravel.ts and optimized with Haversine & 2-Opt
  */
 function generateThaiFallbackPlans(params: GenerateTripPlanParams): GeneratedTripResult {
   const { province, totalBudget, travelersCount, travelStyle, tier, weather, mustVisit = [], preferences } = params;
   const prefNotes = preferences ? preferenceNotes(preferences) : [];
   const costPerPerson = Math.round(totalBudget / Math.max(1, travelersCount));
+  const grounded = buildGroundedContext(province);
 
   // Determine how many plans to return based on Tier:
   // Free: 1, Gold: 3, Platinum: 5
@@ -42,10 +52,12 @@ function generateThaiFallbackPlans(params: GenerateTripPlanParams): GeneratedTri
   if (tier === 'GOLD') maxPlans = 3;
   if (tier === 'PLATINUM') maxPlans = 5;
 
-  // Tailor default plans to requested province and budget
+  const realPlaceNames = grounded.realPlaces.map((p) => p.name);
+
+  // Tailor default plans to requested province, real attractions, and budget
   const tailoredPlans: TripPlanOption[] = SAMPLE_KOH_SAMET_PLANS.slice(0, maxPlans).map(
     (basePlan, idx) => {
-      const budgetFactor = (costPerPerson / 3500) || 1;
+      const budgetFactor = costPerPerson / 3500 || 1;
       const calculatedCost = Math.round(basePlan.totalEstimatedCost * budgetFactor);
 
       // Customize title according to province & style
@@ -54,16 +66,54 @@ function generateThaiFallbackPlans(params: GenerateTripPlanParams): GeneratedTri
         title = `แผน ${String.fromCharCode(65 + idx)}: ทริป ${province} (${travelStyle}) - ฉบับ AI TripSure`;
       }
 
-      return {
+      // Map base days with real attractions, rainyDayBackup, and logicReason
+      const enhancedDays: TripDayPlan[] = basePlan.days.map((day, dIdx) => {
+        const activities: ActivityItem[] = day.activities.map((act, actIdx) => {
+          let locationName = act.location;
+          let placeTitle = act.title;
+
+          // Swap in real province attractions if available
+          const realIdx = (dIdx * 3 + actIdx) % Math.max(1, realPlaceNames.length);
+          if (realPlaceNames.length > 0 && !act.title.includes('เดินทาง') && !act.title.includes('เช็คอิน')) {
+            const picked = realPlaceNames[realIdx];
+            placeTitle = `เที่ยวชม ${picked}`;
+            locationName = `${picked} จ.${grounded.provinceTravel?.name || province}`;
+          }
+
+          const isOutdoor = /หาด|ทะเล|ดอย|เขา|น้ำตก|ชมวิว|เกาะ|เดินป่า/.test(placeTitle + act.description);
+          const backup = isOutdoor
+            ? `คาเฟ่สไตล์โฮมมี่และอาร์ตแกลเลอรีในร่ม ${province}`
+            : `ศูนย์การค้าและตลาดหัตถกรรมในร่ม ${province}`;
+
+          return {
+            ...act,
+            title: placeTitle,
+            location: locationName,
+            isIndoor: !isOutdoor,
+            rainyDayBackup: backup,
+            logicReason: actIdx === 0 ? 'เริ่มทริปยามเช้า อากาศกำลังสบาย ไม่ร้อน' : actIdx === 1 ? 'แวะทานมื้อเที่ยงและหลบแดดตอนบ่าย' : 'ชมบรรยากาศยามเย็นก่อนมื้อค่ำ',
+          };
+        });
+
+        // Run 2-Opt Route Optimization on activities
+        const optimizedActivities = optimizeDailyRoute(activities);
+
+        return {
+          ...day,
+          activities: optimizedActivities,
+        };
+      });
+
+      const draftPlan: TripPlanOption = {
         ...basePlan,
         id: `plan_${idx + 1}_${Date.now()}`,
         title,
         tagline: `ปรับแต่งตามสไตล์ "${travelStyle}" สำหรับ ${travelersCount} ท่าน งบประมาณรวม ${totalBudget.toLocaleString()} บาท`,
         targetVibe: travelStyle,
         ...(preferences ? { recommendedTransport: transportLabel(preferences.transport) } : {}),
-        // Respect the per-person budget cap
         totalEstimatedCost: Math.min(calculatedCost, costPerPerson),
         estimatedSavings: Math.round(Math.min(calculatedCost, costPerPerson) * 0.18),
+        days: enhancedDays,
         savingsTips: [
           ...(mustVisit.length > 0 ? [`จุดที่คุณเลือกจากแผนที่: ${mustVisit.join(', ')}`] : []),
           ...prefNotes,
@@ -72,12 +122,21 @@ function generateThaiFallbackPlans(params: GenerateTripPlanParams): GeneratedTri
           `คำแนะนำสภาพอากาศ: ${weather.advisory}`,
         ],
       };
+
+      draftPlan.feasibilityScore = calculateTripFeasibility(draftPlan, totalBudget, travelersCount);
+      return draftPlan;
     }
   );
 
   // If Platinum tier, add 2 extra bespoke plans if needed
   if (tier === 'PLATINUM' && tailoredPlans.length < 5) {
-    tailoredPlans.push({
+    const platDays1: TripDayPlan[] = tailoredPlans[0].days.map((d) => ({
+      ...d,
+      theme: `${d.theme} (ระดับ Exclusive VIP)`,
+      activities: optimizeDailyRoute(d.activities),
+    }));
+
+    const platPlan1: TripPlanOption = {
       id: `plan_plat_1_${Date.now()}`,
       title: `แผน D: ลักชูรี่ พรีเมียม Private Retreat ใน ${province}`,
       tagline: 'พักวิลล่าระดับ 5 ดาว อาหารไฟน์ไดนิ่ง และรถรับส่งส่วนตัวตลอดทริป',
@@ -90,9 +149,12 @@ function generateThaiFallbackPlans(params: GenerateTripPlanParams): GeneratedTri
         'สิทธิพิเศษสมาชิก Platinum: ฟรีค่าธรรมเนียมจัดทริป Escrow 0%',
         'จองดีลตรงกับทางโรงแรมรับฟรี Afternoon Tea และเครดิตสปา',
       ],
-      days: SAMPLE_KOH_SAMET_PLANS[0].days,
-    });
-    tailoredPlans.push({
+      days: platDays1,
+    };
+    platPlan1.feasibilityScore = calculateTripFeasibility(platPlan1, totalBudget, travelersCount);
+    tailoredPlans.push(platPlan1);
+
+    const platPlan2: TripPlanOption = {
       id: `plan_plat_2_${Date.now()}`,
       title: `แผน E: อันซีนโลคอล & วัฒนธรรมพื้นบ้าน ${province}`,
       tagline: 'สัมผัสวิถีชุมชน เวิร์กช็อปทำอาหารท้องถิ่น และสนับสนุนชุมชนอย่างยั่งยืน',
@@ -105,8 +167,10 @@ function generateThaiFallbackPlans(params: GenerateTripPlanParams): GeneratedTri
         'อุดหนุนชุมชนโดยตรง ลดค่าคนกลาง',
         'ท่องเที่ยวช่วง Green Season ค่าที่พักถูกกว่า High Season ถึง 35%',
       ],
-      days: SAMPLE_KOH_SAMET_PLANS[0].days,
-    });
+      days: platDays1,
+    };
+    platPlan2.feasibilityScore = calculateTripFeasibility(platPlan2, totalBudget, travelersCount);
+    tailoredPlans.push(platPlan2);
   }
 
   // Adjust OTA comparison according to province
@@ -133,7 +197,7 @@ export async function generateAiTripPlan(
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey || apiKey.trim() === '' || apiKey === 'your_gemini_api_key_here') {
-    console.log('TripSure AI: No GEMINI_API_KEY provided. Utilizing Instant Thai Fallback Engine.');
+    console.log('TripSure AI: No GEMINI_API_KEY provided. Utilizing Instant Thai Fallback Engine with Grounded RAG.');
     return generateThaiFallbackPlans(params);
   }
 
@@ -144,9 +208,13 @@ export async function generateAiTripPlan(
     if (params.tier === 'GOLD') planCount = 3;
     if (params.tier === 'PLATINUM') planCount = 5;
 
+    const grounded = buildGroundedContext(params.province);
+
     const prompt = `
 คุณคือสุดยอด AI สถาปนิกและผู้เชี่ยวชาญการวางแผนท่องเที่ยวประเทศไทยของระบบ "TripSure AI (ทริปชัวร์)"
 จงสร้างแผนการท่องเที่ยวภาษาไทยอย่างละเอียด และคุ้มค่างบประมาณที่สุด
+
+${grounded.groundingPrompt}
 
 ข้อมูลความต้องการจากผู้ใช้:
 - จังหวัดปลายทาง: ${params.province}
@@ -191,12 +259,15 @@ ${buildPreferencePrompt(params.preferences, params.travelersCount, Math.round(pa
           "dailyBudget": 1200,
           "activities": [
             {
-              "time": "09:00 - 12:00",
+              "time": "09:00 - 11:30",
               "title": "ชื่อกิจกรรมหรือสถานที่",
               "description": "คำอธิบายละเอียด",
               "estimatedCost": 300,
-              "category": "TRANSPORT",
-              "location": "ชื่อสถานที่ใน ${params.province}"
+              "category": "ATTRACTION",
+              "location": "ชื่อสถานที่ใน ${params.province}",
+              "isIndoor": false,
+              "rainyDayBackup": "สถานที่สำรองในร่มหากฝนตกหรือมีฝุ่น",
+              "logicReason": "เหตุผลที่เลือกสถานที่นี้ในเวลานี้"
             }
           ]
         }
@@ -224,20 +295,37 @@ ${buildPreferencePrompt(params.preferences, params.travelersCount, Math.round(pa
       throw new Error('Invalid JSON structure from Gemini response');
     }
 
-    // Enhance plans with proper IDs and styling
+    // Enhance plans with proper IDs, Route Optimization, and Feasibility Scores
     const validatedPlans: TripPlanOption[] = parsedData.plans.map(
-      (p: any, idx: number) => ({
-        id: p.id || `plan_gemini_${idx + 1}`,
-        title: p.title || `แผนที่ ${idx + 1}: ท่องเที่ยว ${params.province}`,
-        tagline: p.tagline || `แผนการเดินทางแบบ ${params.travelStyle}`,
-        targetVibe: p.targetVibe || params.travelStyle,
-        recommendedTransport: p.recommendedTransport || 'รถยนต์ส่วนบุคคล หรือ รถตู้โดยสาร',
-        recommendedLodging: p.recommendedLodging || 'โรงแรมหรือรีสอร์ตใจกลางเมือง',
-        totalEstimatedCost: Number(p.totalEstimatedCost) || Math.round(params.totalBudget / Math.max(1, params.travelersCount)),
-        estimatedSavings: Number(p.estimatedSavings) || Math.round(params.totalBudget * 0.15),
-        savingsTips: Array.isArray(p.savingsTips) ? p.savingsTips : ['จองตั๋วและที่พักล่วงหน้าผ่าน TripSure เพื่อรับดีลราคาพิเศษ'],
-        days: Array.isArray(p.days) ? p.days : SAMPLE_KOH_SAMET_PLANS[0].days,
-      })
+      (p: any, idx: number) => {
+        const rawDays: TripDayPlan[] = Array.isArray(p.days) ? p.days : SAMPLE_KOH_SAMET_PLANS[0].days;
+        const optimizedDays: TripDayPlan[] = rawDays.map((d) => ({
+          ...d,
+          activities: optimizeDailyRoute(
+            (d.activities || []).map((act: any) => ({
+              ...act,
+              rainyDayBackup: act.rainyDayBackup || `คาเฟ่ในร่ม ${params.province}`,
+              logicReason: act.logicReason || 'ช่วงเวลาเดินทางเหมาะสม ไม่ย้อนศร',
+            }))
+          ),
+        }));
+
+        const planObj: TripPlanOption = {
+          id: p.id || `plan_gemini_${idx + 1}`,
+          title: p.title || `แผนที่ ${idx + 1}: ท่องเที่ยว ${params.province}`,
+          tagline: p.tagline || `แผนการเดินทางแบบ ${params.travelStyle}`,
+          targetVibe: p.targetVibe || params.travelStyle,
+          recommendedTransport: p.recommendedTransport || 'รถยนต์ส่วนบุคคล หรือ รถตู้โดยสาร',
+          recommendedLodging: p.recommendedLodging || 'โรงแรมหรือรีสอร์ตใจกลางเมือง',
+          totalEstimatedCost: Number(p.totalEstimatedCost) || Math.round(params.totalBudget / Math.max(1, params.travelersCount)),
+          estimatedSavings: Number(p.estimatedSavings) || Math.round(params.totalBudget * 0.15),
+          savingsTips: Array.isArray(p.savingsTips) ? p.savingsTips : ['จองตั๋วและที่พักล่วงหน้าผ่าน TripSure เพื่อรับดีลราคาพิเศษ'],
+          days: optimizedDays,
+        };
+
+        planObj.feasibilityScore = calculateTripFeasibility(planObj, params.totalBudget, params.travelersCount);
+        return planObj;
+      }
     );
 
     return {
@@ -250,7 +338,8 @@ ${buildPreferencePrompt(params.preferences, params.travelersCount, Math.round(pa
       estimatedSavings: validatedPlans[0]?.estimatedSavings || 800,
     };
   } catch (err) {
-    console.warn('Gemini 2.5 Flash API error, smoothly defaulting to Thai fallback:', err);
+    console.warn('Gemini 2.5 Flash API error, smoothly defaulting to Grounded Thai fallback:', err);
     return generateThaiFallbackPlans(params);
   }
 }
+

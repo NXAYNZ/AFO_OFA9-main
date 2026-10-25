@@ -154,6 +154,18 @@ export interface ActivityItem {
   estimatedCost: number;
   category: 'FOOD' | 'TRANSPORT' | 'ATTRACTION' | 'LODGING' | 'LEISURE';
   location: string;
+  lat?: number;
+  lng?: number;
+  isIndoor?: boolean;
+  rainyDayBackup?: string;
+  logicReason?: string;
+  distanceFromPrevKm?: number;
+  travelTimeMins?: number;
+  accessibility?: {
+    wheelchair?: 'yes' | 'limited' | 'no';
+    seniorFriendly?: boolean;
+    note?: string;
+  };
 }
 
 export interface TripDayPlan {
@@ -162,6 +174,14 @@ export interface TripDayPlan {
   theme: string;
   activities: ActivityItem[];
   dailyBudget: number;
+}
+
+export interface TripFeasibilityScore {
+  routeEfficiency: number; // 0 - 100%
+  timePacing: number; // 0 - 100%
+  budgetAccuracy: number; // 0 - 100%
+  overallScore: number; // 0 - 100%
+  summary: string;
 }
 
 export interface TripPlanOption {
@@ -175,6 +195,7 @@ export interface TripPlanOption {
   savingsTips: string[];
   recommendedTransport: string;
   recommendedLodging: string;
+  feasibilityScore?: TripFeasibilityScore;
 }
 
 export interface OtaComparison {
@@ -222,6 +243,8 @@ export interface TripParticipant {
   joinedAt: string;
   cancelledAt?: string;
   warningNote?: string;
+  hasCheckedIn?: boolean;
+  ticketQrCode?: string;
 }
 
 export interface CommunityTrip {

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Umbrella, Sparkles } from 'lucide-react';
+import { Umbrella, Sparkles, CloudRain, ShieldAlert, ArrowRightLeft } from 'lucide-react';
 import { WeatherForecast } from '@/lib/types';
 import { stripEmoji } from '@/lib/text';
 import { bangkokNow } from '@/lib/tripEstimates';
@@ -11,13 +11,21 @@ interface PlannerWeatherCardProps {
   province: string;
   season: string;
   weather: WeatherForecast;
+  isRainyBackupActive?: boolean;
+  onToggleRainyBackup?: () => void;
 }
 
 const rainText = (rainMm: number | undefined, pct: number) =>
   rainMm !== undefined ? `${rainMm} มม.` : `${pct}%`;
 
 /** AI planner weather card: animated scene for the selected day, tap the temperature for an effect */
-export const PlannerWeatherCard: React.FC<PlannerWeatherCardProps> = ({ province, season, weather }) => {
+export const PlannerWeatherCard: React.FC<PlannerWeatherCardProps> = ({
+  province,
+  season,
+  weather,
+  isRainyBackupActive = false,
+  onToggleRainyBackup,
+}) => {
   const [dayIndex, setDayIndex] = useState(0);
   const [poke, setPoke] = useState(0);
 
@@ -54,11 +62,31 @@ export const PlannerWeatherCard: React.FC<PlannerWeatherCardProps> = ({ province
 
       {/* Remounted per tap so a thunder strike can replay the rumble */}
       <div key={scene === 'storm' ? `rumble-${poke}` : 'weather'} className={`relative z-10 p-5 sm:p-7 ${poke > 0 && scene === 'storm' ? 'wx-rumble' : ''}`}>
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h3 className="font-display text-2xl font-semibold drop-shadow-sm">อากาศที่ {province}</h3>
-          <p className="text-xs text-white/80">
-            {source} · {season} SEASON
-          </p>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <div>
+            <h3 className="font-display text-2xl font-semibold drop-shadow-sm">อากาศที่ {province}</h3>
+            <p className="text-xs text-white/80">
+              {source} · {season} SEASON
+            </p>
+          </div>
+
+          {/* Rainy-Day / PM2.5 Emergency Plan Swap Button */}
+          {onToggleRainyBackup && (
+            <button
+              type="button"
+              onClick={onToggleRainyBackup}
+              className={`h-9 px-3.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-sm ${
+                isRainyBackupActive
+                  ? 'bg-amber-400 text-amber-950 ring-2 ring-white font-bold animate-pulse'
+                  : 'bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm'
+              }`}
+            >
+              <ArrowRightLeft className="w-3.5 h-3.5" />
+              {isRainyBackupActive
+                ? 'กำลังใช้แผนสำรองในร่ม (Rainy & PM2.5 Backup Active)'
+                : 'สลับแผนหลบฝน/ฝุ่นอัตโนมัติ (Rainy-Day Backup)'}
+            </button>
+          )}
         </div>
 
         <div className="mt-6 grid grid-cols-1 md:grid-cols-[auto_auto_minmax(0,1fr)] gap-6 md:gap-10 items-center">

@@ -149,3 +149,87 @@ export const buildPreferencePrompt = (prefs: TripPreferences, travelersCount: nu
 
   return lines.join('\n');
 };
+
+import { PROVINCE_TRAVEL, ProvinceTravel } from '@/data/thailandTravel';
+import { accessibilityOf, WHEELCHAIR_META } from '@/data/placeAccessibility';
+
+/** Find the matching ProvinceTravel object from arbitrary query string */
+export function resolveProvinceTravel(provinceQuery: string): ProvinceTravel | undefined {
+  const q = (provinceQuery || '').toLowerCase().trim();
+  // 1. Direct match on Thai name or English name
+  const exact = PROVINCE_TRAVEL.find(
+    (p) => q === p.name.toLowerCase() || q === p.nameEn.toLowerCase()
+  );
+  if (exact) return exact;
+
+  // 2. Query contains province name, e.g. "เกาะเสม็ด จ.ระยอง" -> "ระยอง"
+  const contained = PROVINCE_TRAVEL.find(
+    (p) => q.includes(p.name) || (p.nameEn && q.includes(p.nameEn.toLowerCase()))
+  );
+  if (contained) return contained;
+
+  // 3. Province name contains query substring
+  return PROVINCE_TRAVEL.find(
+    (p) => p.name.includes(q) || (p.nameEn && p.nameEn.toLowerCase().includes(q))
+  );
+}
+
+export interface GroundedContext {
+  provinceTravel?: ProvinceTravel;
+  realPlaces: { name: string; category: string; wheelchair?: string; note?: string }[];
+  groundingPrompt: string;
+}
+
+/**
+ * Builds Grounded RAG context from verified database records:
+ * (1) Real places from thailandTravel.ts with photos in placePhotos.ts
+ * (2) Universal accessibility metadata from placeAccessibility.ts
+ * (3) Strict rules preventing hallucinations and zig-zagging
+ */
+export function buildGroundedContext(provinceQuery: string): GroundedContext {
+  const prov = resolveProvinceTravel(provinceQuery);
+  const realPlaces: GroundedContext['realPlaces'] = [];
+
+  if (prov) {
+    prov.attractions.forEach((att) => {
+      const access = accessibilityOf(prov.name, att.name);
+      realPlaces.push({
+        name: att.name,
+        category: att.category,
+        wheelchair: access ? WHEELCHAIR_META[access.wheelchair]?.label : undefined,
+        note: access?.note,
+      });
+    });
+  }
+
+  const promptLines: string[] = [
+    '=== ข้อมูลสถานที่จริงที่ยืนยันแล้วในฐานข้อมูล (Grounded Knowledge Base) ===',
+  ];
+
+  if (prov && realPlaces.length > 0) {
+    promptLines.push(`จังหวัด: ${prov.name} (${prov.nameEn}) ภูมิภาค: ${prov.region}`);
+    promptLines.push('สถานที่จริงที่มีข้อมูลและภาพถ่ายรองรับ (โปรดเลือกสถานที่เหล่านี้เป็นหลัก):');
+    realPlaces.forEach((p, idx) => {
+      const accessStr = p.wheelchair ? ` [อารยสถาปัตย์: ${p.wheelchair}${p.note ? ` - ${p.note}` : ''}]` : '';
+      promptLines.push(`  ${idx + 1}. ${p.name} (ประเภท: ${p.category})${accessStr}`);
+    });
+  } else {
+    promptLines.push(`จังหวัดเป้าหมาย: ${provinceQuery}`);
+    promptLines.push('แนะนำเฉพาะสถานที่สำคัญที่มีอยู่จริงและได้รับความนิยมในจังหวัดนี้ ห้ามสร้างสถานที่สมมติเด็ดขาด');
+  }
+
+  promptLines.push('');
+  promptLines.push('=== กฎเหล็ก 4 ข้อในการจัดทริปของ TripSure AI (Strict Planning Rules) ===');
+  promptLines.push('1. [จัดกลุ่มตามโซน - No Zig-Zag]: กิจกรรมในแต่ละวันต้องอยู่ในโซนเดียวกันหรือเส้นทางเดียวกัน ห้ามเดินทางข้ามไปข้ามมา');
+  promptLines.push('2. [จำนวนสถานที่เหมาะสม - Time Pacing]: จำกัดสถานที่เที่ยวหลักไม่เกิน 3-4 จุดต่อวัน เพื่อไม่ให้เร่งรีบจนเกินไป และเผื่อเวลาเดินทางจริง 15-45 นาทีระหว่างจุด');
+  promptLines.push('3. [ตรงเวลามื้ออาหาร]: ต้องจัดร้านอาหารท้องถิ่นหรือสตรีทฟู้ดให้ตรงเวลามื้อเที่ยง (11:30 - 13:30) และมื้อเย็น (17:30 - 20:00)');
+  promptLines.push('4. [แผนสำรองหลบฝนและเหตุผล]: ทุกกิจกรรมต้องระบุ:');
+  promptLines.push('   - "rainyDayBackup": ชื่อสถานที่สำรองในร่ม (เช่น คาเฟ่ พิพิธภัณฑ์ ตลาดในร่ม หรือห้าง) เผื่อฝนตกหนักหรือฝุ่น PM2.5 สูง');
+  promptLines.push('   - "logicReason": คำอธิบายสั้นๆ ว่าทำไมถึงเลือกสถานที่นี้ในเวลานี้ (เช่น เลี่ยงแดดบ่าย, จุดชมพระอาทิตย์ตกที่ดีที่สุด, แวะทานมื้อเที่ยงทางผ่าน)');
+
+  return {
+    provinceTravel: prov,
+    realPlaces,
+    groundingPrompt: promptLines.join('\n'),
+  };
+}

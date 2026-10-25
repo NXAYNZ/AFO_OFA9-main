@@ -27,9 +27,15 @@ import {
   PiggyBank,
   HeartHandshake,
   Accessibility,
+  CloudRain,
+  ShieldAlert,
+  Navigation,
+  Award,
+  ArrowRightLeft,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { stripEmoji } from '@/lib/text';
+import { accessibilityOf, WHEELCHAIR_META } from '@/data/placeAccessibility';
 import {
   AiTripResponse,
   SubscriptionTier,
@@ -134,6 +140,23 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
   const [tripData, setTripData] = useState<AiTripResponse | null>(null);
   const [selectedPlanIndex, setSelectedPlanIndex] = useState<number>(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isRainyBackupActive, setIsRainyBackupActive] = useState<boolean>(false);
+  const [accessibleMode, setAccessibleMode] = useState<boolean>(false);
+
+  const toggleAccessibleMode = () => {
+    setAccessibleMode((prev) => {
+      const next = !prev;
+      if (next) {
+        setPreferences((p) => ({
+          ...p,
+          elderlyCount: Math.max(1, p.elderlyCount),
+          disabledCount: Math.max(1, p.disabledCount),
+          disabledNote: p.disabledNote || 'ต้องการสถานที่ที่มีทางลาด ลิฟต์ และห้องน้ำคนพิการ',
+        }));
+      }
+      return next;
+    });
+  };
 
   const tierConfig = TIER_CONFIGS[currentTier];
   const detectedSeason = detectThailandSeason(travelDates);
@@ -409,11 +432,25 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
 
         {/* Group needs -> detailed AI prompt */}
         <div className="px-5 sm:px-7 py-6 border-t border-slate-100 bg-slate-50 space-y-6">
-          <div>
-            <h3 className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
-              <SlidersHorizontal className="w-4 h-4 text-slate-500" /> ความต้องการเฉพาะของกลุ่ม
-            </h3>
-            <p className="mt-0.5 text-xs text-slate-500">ระบบแปลงเป็นคำสั่งเชิงลึกส่งให้ AI อัตโนมัติ</p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+                <SlidersHorizontal className="w-4 h-4 text-slate-500" /> ความต้องการเฉพาะของกลุ่ม
+              </h3>
+              <p className="mt-0.5 text-xs text-slate-500">ระบบแปลงเป็นคำสั่งเชิงลึกส่งให้ AI อัตโนมัติ</p>
+            </div>
+            <button
+              type="button"
+              onClick={toggleAccessibleMode}
+              className={`h-9 px-3.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-colors border ${
+                accessibleMode
+                  ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                  : 'bg-white border-slate-300 text-slate-700 hover:border-blue-400'
+              }`}
+            >
+              <Accessibility className="w-4 h-4" />
+              {accessibleMode ? '✓ เปิดโหมดผู้สูงอายุ / วีลแชร์' : 'โหมดผู้สูงอายุ / วีลแชร์ (Accessible Mode)'}
+            </button>
           </div>
 
           <div>
@@ -607,7 +644,13 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
       {tripData && (
         <div className="space-y-10 animate-fadeIn">
 
-          <PlannerWeatherCard province={tripData.province} season={tripData.season} weather={tripData.weather} />
+          <PlannerWeatherCard
+            province={tripData.province}
+            season={tripData.season}
+            weather={tripData.weather}
+            isRainyBackupActive={isRainyBackupActive}
+            onToggleRainyBackup={() => setIsRainyBackupActive((prev) => !prev)}
+          />
 
           {/* Plans */}
           <section>
@@ -673,6 +716,39 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
                   </div>
                 </div>
 
+                {/* AI Trip Feasibility Score Card */}
+                {plan.feasibilityScore && (
+                  <div className="px-5 sm:px-7 py-4 bg-slate-50 border-b border-slate-200">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Award className="w-5 h-5 text-emerald-600" />
+                        <span className="text-sm font-semibold text-slate-900">AI Trip Feasibility Score</span>
+                        <span className="font-mono text-sm font-bold text-emerald-700 bg-emerald-100/70 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                          {plan.feasibilityScore.overallScore}%
+                        </span>
+                      </div>
+                      <span className="text-xs text-slate-600 leading-relaxed">{plan.feasibilityScore.summary}</span>
+                    </div>
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                      <div className="bg-white p-2.5 rounded-md border border-slate-200 shadow-2xs">
+                        <div className="text-slate-500 font-medium">Route Efficiency</div>
+                        <div className="font-mono font-semibold text-slate-900 text-sm mt-0.5">{plan.feasibilityScore.routeEfficiency}%</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">เรียงคลัสเตอร์ ไม่ย้อนศร</div>
+                      </div>
+                      <div className="bg-white p-2.5 rounded-md border border-slate-200 shadow-2xs">
+                        <div className="text-slate-500 font-medium">Time Pacing</div>
+                        <div className="font-mono font-semibold text-slate-900 text-sm mt-0.5">{plan.feasibilityScore.timePacing}%</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">3-4 จุดหลัก/วัน + มื้ออาหาร</div>
+                      </div>
+                      <div className="bg-white p-2.5 rounded-md border border-slate-200 shadow-2xs">
+                        <div className="text-slate-500 font-medium">Budget Realism</div>
+                        <div className="font-mono font-semibold text-slate-900 text-sm mt-0.5">{plan.feasibilityScore.budgetAccuracy}%</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">สอดคล้องค่าครองชีพจริง</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Day by day: a timetable on a route line */}
                 <div className="divide-y divide-slate-100">
                   {plan.days.map((day) => (
@@ -687,21 +763,70 @@ export const AiPlannerTab: React.FC<AiPlannerTabProps> = ({
 
                       <ol className="relative">
                         <span aria-hidden className="absolute left-[60px] top-2 bottom-2 border-l-2 border-dotted border-slate-300" />
-                        {day.activities.map((act, actIdx) => (
-                          <li key={actIdx} className="relative grid grid-cols-[52px_16px_minmax(0,1fr)_auto] gap-x-3 py-2.5">
-                            <span className="font-mono text-sm text-slate-500 pt-px">{act.time}</span>
-                            <span aria-hidden className="relative z-10 mt-1.5 w-3 h-3 rounded-full border-2 border-emerald-600 bg-white dark:bg-ink-900" />
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold text-slate-900">{stripEmoji(act.title)}</div>
-                              <div className="mt-0.5 text-sm text-slate-600 leading-relaxed">{stripEmoji(act.description)}</div>
-                              <div className="mt-1 text-xs text-slate-500 flex items-center gap-1">
-                                <MapPin className="w-3 h-3" />
-                                {stripEmoji(act.location)}
+                        {day.activities.map((act, actIdx) => {
+                          const isSwapped = isRainyBackupActive && act.rainyDayBackup;
+                          const cleanTitle = stripEmoji(act.title);
+                          const cleanLoc = stripEmoji(act.location);
+                          const placeCandidate = cleanLoc.split(' ')[0] || cleanTitle.replace(/เที่ยวชม\s*/, '');
+                          const access = accessibilityOf(tripData.province, placeCandidate) || accessibilityOf(tripData.province, cleanTitle);
+                          const accessMeta = access ? WHEELCHAIR_META[access.wheelchair] : null;
+
+                          return (
+                            <li key={actIdx} className="relative grid grid-cols-[52px_16px_minmax(0,1fr)_auto] gap-x-3 py-3">
+                              <span className="font-mono text-sm text-slate-500 pt-px">{act.time}</span>
+                              <span aria-hidden className={`relative z-10 mt-1.5 w-3 h-3 rounded-full border-2 bg-white dark:bg-ink-900 ${
+                                isSwapped ? 'border-sky-500' : 'border-emerald-600'
+                              }`} />
+                              <div className="min-w-0">
+                                {isSwapped ? (
+                                  <div>
+                                    <div className="text-sm font-semibold text-sky-900 flex flex-wrap items-center gap-1.5">
+                                      <CloudRain className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                                      {act.rainyDayBackup}
+                                      <span className="text-[10px] bg-sky-100 text-sky-800 px-1.5 py-0.5 rounded font-medium">
+                                        สลับเข้าแผนในร่ม
+                                      </span>
+                                    </div>
+                                    <div className="text-xs text-slate-400 mt-0.5 line-through">
+                                      เดิม: {cleanTitle}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="text-sm font-semibold text-slate-900">{cleanTitle}</div>
+                                )}
+                                <div className="mt-0.5 text-sm text-slate-600 leading-relaxed">{stripEmoji(act.description)}</div>
+                                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                                  <span className="flex items-center gap-1">
+                                    <MapPin className="w-3 h-3 text-slate-400" />
+                                    {isSwapped ? act.rainyDayBackup : cleanLoc}
+                                  </span>
+                                  {act.distanceFromPrevKm ? (
+                                    <span className="flex items-center gap-1 font-mono text-slate-600">
+                                      <Navigation className="w-3 h-3 text-slate-400" />
+                                      {act.distanceFromPrevKm} กม. (~{act.travelTimeMins || 15} นาที)
+                                    </span>
+                                  ) : null}
+                                  {accessMeta && (
+                                    <span
+                                      className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded font-medium"
+                                      style={{ backgroundColor: `${accessMeta.color}15`, color: accessMeta.color }}
+                                      title={access?.note || accessMeta.label}
+                                    >
+                                      <Accessibility className="w-3 h-3" />
+                                      {accessMeta.label}
+                                    </span>
+                                  )}
+                                </div>
+                                {act.logicReason && (
+                                  <div className="mt-1.5 text-[11px] text-emerald-800 bg-emerald-50/80 border border-emerald-100 px-2 py-0.5 rounded inline-block">
+                                    💡 {act.logicReason}
+                                  </div>
+                                )}
                               </div>
-                            </div>
-                            <span className="font-mono text-sm text-slate-700 pt-px">฿{act.estimatedCost.toLocaleString()}</span>
-                          </li>
-                        ))}
+                              <span className="font-mono text-sm text-slate-700 pt-px">฿{act.estimatedCost.toLocaleString()}</span>
+                            </li>
+                          );
+                        })}
                       </ol>
                     </section>
                   ))}

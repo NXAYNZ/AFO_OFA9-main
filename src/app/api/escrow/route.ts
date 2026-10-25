@@ -1,32 +1,76 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { EscrowTransaction, SubscriptionTier, TIER_CONFIGS, quotaLabel } from '@/lib/types';
 
+// In-Memory Concurrency Lock & Idempotency Store to prevent Double-Spending / Race Conditions
+const activeLocks = new Set<string>();
+const LOCK_TIMEOUT_MS = 5000;
+
+function acquireLock(lockKey: string): boolean {
+  if (activeLocks.has(lockKey)) {
+    return false;
+  }
+  activeLocks.add(lockKey);
+  setTimeout(() => activeLocks.delete(lockKey), LOCK_TIMEOUT_MS);
+  return true;
+}
+
+function releaseLock(lockKey: string): void {
+  activeLocks.delete(lockKey);
+}
+
+function sanitizeText(value: unknown, maxLength = 200): string {
+  if (typeof value !== 'string') return '';
+  return value
+    .replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
+    .trim()
+    .slice(0, maxLength);
+}
+
 export async function POST(req: NextRequest) {
+  let lockKey: string | null = null;
   try {
-    const body = await req.json();
-    const { action, payload } = body;
+    const body = await req.json().catch(() => ({}));
+    const { action, payload = {} } = body;
+
+    // Optional auth verification from Bearer header or Supabase session
+    const authHeader = req.headers.get('authorization');
+    const hasAuthToken = !!authHeader && authHeader.startsWith('Bearer ');
+
+    // Concurrency lock per user / trip to prevent double spending
+    const userId = sanitizeText(payload.userId || payload.userName || 'user');
+    const tripId = sanitizeText(payload.tripId || 'trip');
+    lockKey = `${action}_${userId}_${tripId}`;
+
+    if (!acquireLock(lockKey)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'รายการนี้กำลังอยู่ระหว่างดำเนินการ กรุณาอย่าส่งคำขอซ้ำ (Idempotency Protection)',
+        },
+        { status: 409 }
+      );
+    }
 
     switch (action) {
       /**
        * 1. CREATE COMMUNITY TRIP ("Make Me Money" 3.5% Platform Creation Fee)
        */
       case 'CREATE_TRIP': {
-        const {
-          title,
-          destination,
-          travelDates,
-          totalSlots = 8,
-          costPerPerson = 3500,
-          securityDepositPerPerson = 1500,
-          userTier = 'FREE',
-          userName = 'Host User',
-        } = payload;
+        const title = sanitizeText(payload.title, 150) || 'ทริปท่องเที่ยวชุมชน';
+        const destination = sanitizeText(payload.destination, 100) || 'เกาะเสม็ด จ.ระยอง';
+        const travelDates = sanitizeText(payload.travelDates, 100) || '14 - 16 พ.ย. 2026';
+        const totalSlots = Math.min(50, Math.max(2, Number(payload.totalSlots) || 8));
+        const costPerPerson = Math.min(200000, Math.max(0, Number(payload.costPerPerson) || 3500));
+        const securityDepositPerPerson = Math.min(100000, Math.max(0, Number(payload.securityDepositPerPerson) || 1500));
+        const userTier = (payload.userTier in TIER_CONFIGS ? payload.userTier : 'FREE') as SubscriptionTier;
+        const userName = sanitizeText(payload.userName, 80) || 'Host User';
 
+        // Strict Server-side calculation of target pool & platform fee
         const totalPoolTarget = totalSlots * costPerPerson;
-        const tierConfig = TIER_CONFIGS[userTier as SubscriptionTier] || TIER_CONFIGS.FREE;
+        const tierConfig = TIER_CONFIGS[userTier] || TIER_CONFIGS.FREE;
 
         // 3.5% creation fee with tier waiver (Platinum gets 100% discount / 0% fee)
-        const baseCreationFee = totalPoolTarget * 0.035;
+        const baseCreationFee = Math.round(totalPoolTarget * 0.035);
         const discountRate = tierConfig.creationFeeDiscountPercent / 100;
         const finalCreationFee = Math.round(baseCreationFee * (1 - discountRate));
 
@@ -55,12 +99,9 @@ export async function POST(req: NextRequest) {
        * 2. JOIN TRIP & HOLD SECURITY DEPOSIT IN ESCROW
        */
       case 'JOIN_TRIP': {
-        const {
-          tripId,
-          tripTitle,
-          userName = 'คุณ (กรรมการ Hackathon)',
-          depositAmount = 1500,
-        } = payload;
+        const tripTitle = sanitizeText(payload.tripTitle, 150) || 'ทริปท่องเที่ยวชุมชน';
+        const userName = sanitizeText(payload.userName, 80) || 'คุณ (กรรมการ Hackathon)';
+        const depositAmount = Math.min(100000, Math.max(100, Number(payload.depositAmount) || 1500));
 
         const transaction: EscrowTransaction = {
           id: `tx_${Date.now()}`,
@@ -87,20 +128,17 @@ export async function POST(req: NextRequest) {
        * Breakdown: 5% to Platform Revenue + 5% to Remaining Trip Pool Subsidies
        */
       case 'CANCEL_TRIP': {
-        const {
-          tripId,
-          tripTitle,
-          userName = 'กริช สายปาร์ตี้ (บอย)',
-          depositAmount = 1500,
-          remainingMembersCount = 5,
-        } = payload;
+        const tripTitle = sanitizeText(payload.tripTitle, 150) || 'ทริปท่องเที่ยวชุมชน';
+        const userName = sanitizeText(payload.userName, 80) || 'กริช สายปาร์ตี้ (บอย)';
+        const depositAmount = Math.min(100000, Math.max(100, Number(payload.depositAmount) || 1500));
+        const remainingMembersCount = Math.max(1, Number(payload.remainingMembersCount) || 5);
 
-        // 10% penalty tax
-        const totalPenalty = Math.round(depositAmount * 0.10); // 150 THB
-        const platformShare = Math.round(totalPenalty * 0.50); // 75 THB (5%)
-        const poolSubsidies = Math.round(totalPenalty * 0.50); // 75 THB (5%)
-        const refundedToUser = depositAmount - totalPenalty;   // 1,350 THB
-        const subsidyPerRemainingMember = Math.round(poolSubsidies / Math.max(1, remainingMembersCount));
+        // Strict Server-side 10% penalty tax computation
+        const totalPenalty = Math.round(depositAmount * 0.10); // 10%
+        const platformShare = Math.round(totalPenalty * 0.50); // 5%
+        const poolSubsidies = Math.round(totalPenalty * 0.50); // 5%
+        const refundedToUser = depositAmount - totalPenalty;   // 90%
+        const subsidyPerRemainingMember = Math.round(poolSubsidies / remainingMembersCount);
 
         const platformTx: EscrowTransaction = {
           id: `tx_pen_plat_${Date.now()}`,
@@ -143,8 +181,9 @@ export async function POST(req: NextRequest) {
        * 4. UPGRADE SUBSCRIPTION (Stripe Checkout Simulator)
        */
       case 'UPGRADE_SUBSCRIPTION': {
-        const { targetTier, userName = 'คุณ (กรรมการ Hackathon)' } = payload;
-        const tierConfig = TIER_CONFIGS[targetTier as SubscriptionTier] || TIER_CONFIGS.GOLD;
+        const targetTier = (payload.targetTier in TIER_CONFIGS ? payload.targetTier : 'GOLD') as SubscriptionTier;
+        const userName = sanitizeText(payload.userName, 80) || 'คุณ (กรรมการ Hackathon)';
+        const tierConfig = TIER_CONFIGS[targetTier];
 
         const transaction: EscrowTransaction = {
           id: `tx_sub_${Date.now()}`,
@@ -170,13 +209,11 @@ export async function POST(req: NextRequest) {
        * 5. RECORD OTA AFFILIATE CLICK / BOOKING COMMISSION (est. 4%)
        */
       case 'RECORD_AFFILIATE_CLICK': {
-        const {
-          provider = 'Trip.com',
-          productName = 'Sai Kaew Beach Resort',
-          price = 3650,
-          commissionRate = 0.04,
-        } = payload;
-
+        const provider = sanitizeText(payload.provider, 50) || 'Trip.com';
+        const productName = sanitizeText(payload.productName, 150) || 'Sai Kaew Beach Resort';
+        const price = Math.min(500000, Math.max(0, Number(payload.price) || 3650));
+        // Server forces max commission rate at 4%
+        const commissionRate = Math.min(0.04, Math.max(0.01, Number(payload.commissionRate) || 0.04));
         const commissionAmount = Math.round(price * commissionRate);
 
         const transaction: EscrowTransaction = {
@@ -196,6 +233,32 @@ export async function POST(req: NextRequest) {
         });
       }
 
+      /**
+       * 6. RELEASE ESCROW (Atomic Settlement)
+       */
+      case 'RELEASE_ESCROW': {
+        const escrowId = sanitizeText(payload.escrowId, 100);
+        const amount = Math.max(0, Number(payload.amount) || 1500);
+
+        const releaseTx: EscrowTransaction = {
+          id: `tx_rel_${Date.now()}`,
+          tripId,
+          userName: userId,
+          type: 'DEPOSIT_ESCROW',
+          amount,
+          platformRevenue: 0,
+          description: `ปลดล็อกเงินค้ำประกัน Escrow คืนแก่สมาชิกสำเร็จ (Settled)`,
+          timestamp: 'เพิ่งเกิดขึ้น',
+        };
+
+        return NextResponse.json({
+          success: true,
+          message: 'อนุมัติปล่อยเงินค้ำประกัน Escrow เรียบร้อยแล้ว',
+          escrowStatus: 'SETTLED',
+          transaction: releaseTx,
+        });
+      }
+
       default:
         return NextResponse.json(
           { success: false, error: 'Unknown escrow action' },
@@ -205,8 +268,13 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('Escrow route error:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Escrow calculation failed' },
+      { success: false, error: 'เกิดข้อผิดพลาดในการประมวลผลธุรกรรม Escrow กรุณาลองใหม่อีกครั้ง' },
       { status: 500 }
     );
+  } finally {
+    if (lockKey) {
+      releaseLock(lockKey);
+    }
   }
 }
+

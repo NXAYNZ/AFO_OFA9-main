@@ -14,7 +14,7 @@ export const RevealObserver: React.FC = () => {
           }
         }
       },
-      { rootMargin: '0px 0px -8% 0px', threshold: 0.12 }
+      { rootMargin: '0px 0px 0px 0px', threshold: 0.05 }
     );
     const scan = () => document.querySelectorAll('.reveal:not(.is-in)').forEach((el) => io.observe(el));
     scan();

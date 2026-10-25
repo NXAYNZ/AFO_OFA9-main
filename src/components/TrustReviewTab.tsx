@@ -61,6 +61,7 @@ export const TrustReviewTab: React.FC<TrustReviewTabProps> = ({
   ]);
 
   const AVAILABLE_BADGES = [
+    'Verified Traveler',
     'Super Host',
     'ซื่อสัตย์โปร่งใส',
     'ตรงต่อเวลา',
@@ -259,17 +260,30 @@ export const TrustReviewTab: React.FC<TrustReviewTabProps> = ({
 
               {rev.badges.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-1.5">
-                  {rev.badges.map((b, bIdx) => (
-                    <span
-                      key={bIdx}
-                      className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded ${
-                        isWarning(b) ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      {isWarning(b) ? <AlertCircle className="w-3 h-3" /> : <Award className="w-3 h-3 text-amber-600" />}
-                      {stripEmoji(b)}
-                    </span>
-                  ))}
+                  {rev.badges.map((b, bIdx) => {
+                    const isVerified = b.includes('Verified') || b === 'Verified Traveler';
+                    return (
+                      <span
+                        key={bIdx}
+                        className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded ${
+                          isVerified
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-semibold'
+                            : isWarning(b)
+                              ? 'bg-rose-50 text-rose-700'
+                              : 'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {isVerified ? (
+                          <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                        ) : isWarning(b) ? (
+                          <AlertCircle className="w-3 h-3" />
+                        ) : (
+                          <Award className="w-3 h-3 text-amber-600" />
+                        )}
+                        {stripEmoji(b)}
+                      </span>
+                    );
+                  })}
                 </div>
               )}
             </article>

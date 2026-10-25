@@ -4,28 +4,82 @@ import { getThailandWeather } from '@/lib/weather';
 import { TIER_CONFIGS, SubscriptionTier, isQuotaExhausted } from '@/lib/types';
 import { sanitizePreferences } from '@/lib/tripPrompt';
 
+// In-Memory Rate Limiter: 10 requests per 15 minutes per IP
+interface RateLimitRecord {
+  timestamps: number[];
+}
+const ipRateLimits = new Map<string, RateLimitRecord>();
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const MAX_REQUESTS_PER_WINDOW = 10;
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = ipRateLimits.get(ip) || { timestamps: [] };
+
+  // Filter timestamps within the current sliding window
+  const activeTimestamps = record.timestamps.filter((ts) => now - ts < RATE_LIMIT_WINDOW_MS);
+
+  if (activeTimestamps.length >= MAX_REQUESTS_PER_WINDOW) {
+    ipRateLimits.set(ip, { timestamps: activeTimestamps });
+    return false; // Rate limit exceeded
+  }
+
+  activeTimestamps.push(now);
+  ipRateLimits.set(ip, { timestamps: activeTimestamps });
+  return true;
+}
+
+// Clean and truncate untrusted free-form text input
+function sanitizeText(value: unknown, maxLength = 400): string {
+  if (typeof value !== 'string') return '';
+  return value
+    .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Strip control characters
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxLength);
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const {
-      province = 'เกาะเสม็ด จ.ระยอง',
-      travelDates = '14 - 16 พ.ย. 2026',
-      totalBudget = 10500,
-      travelersCount = 3,
-      travelStyle = 'สายคาเฟ่',
-      tier = 'FREE',
-      currentQuotaUsed = 0,
-      mustVisit = [],
-      preferences,
-    } = body;
-    const safePreferences = sanitizePreferences(preferences, Math.max(1, Number(travelersCount) || 1));
+    // 1. IP Rate Limiting
+    const clientIp =
+      req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      req.headers.get('x-real-ip') ||
+      '127.0.0.1';
 
-    // Attractions picked on the map: plain strings only, capped to keep the prompt small
-    const mustVisitList: string[] = Array.isArray(mustVisit)
-      ? mustVisit.filter((s: unknown): s is string => typeof s === 'string').map((s) => s.slice(0, 80)).slice(0, 15)
+    if (!checkRateLimit(clientIp)) {
+      return NextResponse.json(
+        {
+          success: false,
+          rateLimited: true,
+          message: 'คุณเรียกใช้งานระบบ AI บ่อยเกินไป กรุณารอสักครู่ (จำกัดสูงสุด 10 ครั้งต่อ 15 นาที)',
+        },
+        { status: 429 }
+      );
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const rawProvince = sanitizeText(body.province, 100) || 'เกาะเสม็ด จ.ระยอง';
+    const rawDates = sanitizeText(body.travelDates, 100) || '14 - 16 พ.ย. 2026';
+    const rawStyle = sanitizeText(body.travelStyle, 50) || 'สายคาเฟ่';
+
+    const totalBudget = Math.min(1000000, Math.max(500, Number(body.totalBudget) || 10500));
+    const travelersCount = Math.min(50, Math.max(1, Number(body.travelersCount) || 3));
+    const currentQuotaUsed = Math.max(0, Number(body.currentQuotaUsed) || 0);
+
+    const safePreferences = sanitizePreferences(body.preferences, travelersCount);
+
+    // Attractions picked on the map: plain strings only, capped & sanitized
+    const mustVisitList: string[] = Array.isArray(body.mustVisit)
+      ? body.mustVisit
+          .filter((s: unknown): s is string => typeof s === 'string')
+          .map((s: string) => sanitizeText(s, 100))
+          .filter((s: string) => s.length > 0)
+          .slice(0, 15)
       : [];
 
-    const validatedTier = (tier in TIER_CONFIGS ? tier : 'FREE') as SubscriptionTier;
+    const tier = typeof body.tier === 'string' && body.tier in TIER_CONFIGS ? body.tier : 'FREE';
+    const validatedTier = tier as SubscriptionTier;
     const tierConfig = TIER_CONFIGS[validatedTier];
 
     // Check Quota Paywall ("Make Me Money" Stream #1)
@@ -42,16 +96,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Fetch Real-time or Fallback Weather
-    const weather = await getThailandWeather(province, travelDates);
+    // 2. Fetch Real-time or Fallback Weather
+    const weather = await getThailandWeather(rawProvince, rawDates);
 
-    // 2. Generate Structured Trip Plan & OTA Comparisons via Gemini 2.5 Flash / Fallback
+    // 3. Generate Structured Trip Plan & OTA Comparisons via Gemini 2.5 Flash / Fallback
     const tripResult = await generateAiTripPlan({
-      province,
-      travelDates,
-      totalBudget: Number(totalBudget),
-      travelersCount: Number(travelersCount),
-      travelStyle,
+      province: rawProvince,
+      travelDates: rawDates,
+      totalBudget,
+      travelersCount,
+      travelStyle: rawStyle,
       tier: validatedTier,
       weather,
       mustVisit: mustVisitList,
@@ -65,11 +119,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       tripId: `trip_${Date.now()}`,
-      province,
-      travelDates,
-      travelStyle,
-      travelersCount: Number(travelersCount),
-      totalBudget: Number(totalBudget),
+      province: rawProvince,
+      travelDates: rawDates,
+      travelStyle: rawStyle,
+      travelersCount,
+      totalBudget,
       season: weather.season,
       weather,
       plans: tripResult.plans,
@@ -84,10 +138,11 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('AI Planner route error:', error);
+    // Mask internal server errors from leaking sensitive system info
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'เกิดข้อผิดพลาดในการประมวลผลแผนการเดินทาง',
+        error: 'เกิดข้อผิดพลาดในการประมวลผลแผนการเดินทาง กรุณาลองใหม่อีกครั้ง',
       },
       { status: 500 }
     );
